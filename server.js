@@ -36,8 +36,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
   etag: false
 }));
 
-// Disable HTML page caching — browsers must always fetch fresh pages
+// Disable HTML page caching — skip preview routes (browser PDF viewer breaks with no-store)
 app.use((req, res, next) => {
+  if (req.path.endsWith('/preview')) return next();
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
