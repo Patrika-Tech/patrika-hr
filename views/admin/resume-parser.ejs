@@ -287,6 +287,18 @@
                 <label class="form-label fw-semibold">Others (L/yr)</label>
                 <input type="number" class="form-control" id="s-others" placeholder="0" min="0" step="0.1">
               </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Resume File</label>
+                <div id="s-resume-info" class="alert alert-info py-2 d-none mb-1">
+                  <i class="bi bi-file-earmark-check me-1"></i>
+                  <span id="s-resume-name"></span>
+                  <small class="text-muted ms-2">(from parser — will be saved)</small>
+                </div>
+                <div id="s-resume-alt" class="d-none">
+                  <input type="file" class="form-control" id="s-resume-file" accept=".pdf,.doc,.docx">
+                  <div class="form-text">Upload a different file, or leave blank to skip.</div>
+                </div>
+              </div>
             </div>
             <button class="btn btn-gold mt-3 px-4" id="saveBtn" onclick="saveCandidate()">
               <i class="bi bi-person-check me-1"></i>Save to Candidates
@@ -331,6 +343,7 @@ fileInput.addEventListener('change', () => {
 });
 
 function handleFile(file) {
+  _parsedFile = file;
   fileNameEl.textContent = `${file.name}  (${(file.size/1024).toFixed(1)} KB)`;
   fileInfo.classList.remove('d-none');
   results.style.display = 'none';
@@ -354,6 +367,7 @@ async function parseFile(file) {
 }
 
 let _parsedData = null;
+let _parsedFile = null;
 
 function val(v) { return v || '—'; }
 
@@ -365,6 +379,16 @@ function renderResults(d) {
   document.getElementById('s-email').value    = d.email || '';
   document.getElementById('s-phone').value    = d.phone || '';
   document.getElementById('s-location').value = d.location || '';
+
+  // Show parsed file info in save section
+  if (_parsedFile) {
+    document.getElementById('s-resume-name').textContent = _parsedFile.name;
+    document.getElementById('s-resume-info').classList.remove('d-none');
+    document.getElementById('s-resume-alt').classList.add('d-none');
+  } else {
+    document.getElementById('s-resume-info').classList.add('d-none');
+    document.getElementById('s-resume-alt').classList.remove('d-none');
+  }
 
   // Reset save alert
   const sa = document.getElementById('saveAlert');
@@ -429,6 +453,7 @@ function renderResults(d) {
 
 function clearFile() {
   fileInput.value = '';
+  _parsedFile = null;
   fileInfo.classList.add('d-none');
   results.style.display = 'none';
   fileNameEl.textContent = '';
@@ -462,31 +487,35 @@ async function saveCandidate() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
 
-  const payload = {
-    fullName,
-    contactNumber,
-    email:           document.getElementById('s-email').value.trim(),
-    currentLocation: document.getElementById('s-location').value.trim(),
-    positionApplying,
-    noticePeriod,
-    packageFixed:    document.getElementById('s-fixed').value    || '0',
-    packageVariables:document.getElementById('s-variable').value || '0',
-    packageOthers:   document.getElementById('s-others').value   || '0',
-    parsedLinkedIn:          _parsedData?.linkedin           || '',
-    parsedSummary:           _parsedData?.summary            || '',
-    parsedTotalExperience:   _parsedData?.totalExperience    || '',
-    parsedCurrentRole:       _parsedData?.currentRole        || '',
-    parsedSkills:            JSON.stringify(_parsedData?.skills || []),
-    parsedExperienceEntries: JSON.stringify(_parsedData?.experienceEntries || []),
-    parsedEducation:         JSON.stringify(_parsedData?.education || []),
-    parsedRawText:           _parsedData?.rawText            || ''
-  };
+  // Determine which file to attach: prefer the originally parsed file,
+  // fall back to a manually selected replacement file
+  const altFileInput = document.getElementById('s-resume-file');
+  const fileToSend = _parsedFile || (altFileInput && altFileInput.files[0]) || null;
+
+  const fd = new FormData();
+  fd.append('fullName',        fullName);
+  fd.append('contactNumber',   contactNumber);
+  fd.append('email',           document.getElementById('s-email').value.trim());
+  fd.append('currentLocation', document.getElementById('s-location').value.trim());
+  fd.append('positionApplying', positionApplying);
+  fd.append('noticePeriod',    noticePeriod);
+  fd.append('packageFixed',    document.getElementById('s-fixed').value    || '0');
+  fd.append('packageVariables',document.getElementById('s-variable').value || '0');
+  fd.append('packageOthers',   document.getElementById('s-others').value   || '0');
+  fd.append('parsedLinkedIn',          _parsedData?.linkedin           || '');
+  fd.append('parsedSummary',           _parsedData?.summary            || '');
+  fd.append('parsedTotalExperience',   _parsedData?.totalExperience    || '');
+  fd.append('parsedCurrentRole',       _parsedData?.currentRole        || '');
+  fd.append('parsedSkills',            JSON.stringify(_parsedData?.skills || []));
+  fd.append('parsedExperienceEntries', JSON.stringify(_parsedData?.experienceEntries || []));
+  fd.append('parsedEducation',         JSON.stringify(_parsedData?.education || []));
+  fd.append('parsedRawText',           _parsedData?.rawText            || '');
+  if (fileToSend) fd.append('resume', fileToSend);
 
   try {
     const resp = await fetch('/admin/resume-parser/save', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: fd   // let browser set Content-Type + multipart boundary automatically
     });
     const json = await resp.json();
     const sa = document.getElementById('saveAlert');

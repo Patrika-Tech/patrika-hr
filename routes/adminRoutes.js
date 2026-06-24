@@ -4,13 +4,30 @@ const multer = require('multer');
 const adminController = require('../controllers/adminController');
 const { requireAdmin, redirectIfLoggedIn } = require('../middleware/auth');
 
+const path = require('path');
+
+const fileFilter = (req, file, cb) => {
+  const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  cb(null, allowed.includes(file.mimetype));
+};
+
 const memoryUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter(req, file, cb) {
-    const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    cb(null, allowed.includes(file.mimetype));
-  }
+  fileFilter
+});
+
+const diskUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
+    filename: (req, file, cb) => {
+      const date = new Date().toISOString().split('T')[0];
+      const safe = file.originalname.replace(/[^a-zA-Z0-9.]/g, '_');
+      cb(null, `${date}_${Date.now()}_${safe}`);
+    }
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter
 });
 
 // Auth
@@ -33,7 +50,7 @@ router.delete('/candidate/:id', requireAdmin, adminController.deleteCandidate);
 // Offline Resume Parser
 router.get('/resume-parser',        requireAdmin, adminController.showResumeParser);
 router.post('/resume-parser/parse', requireAdmin, memoryUpload.single('resume'), adminController.parseOfflineResume);
-router.post('/resume-parser/save',  requireAdmin, adminController.saveOfflineCandidate);
+router.post('/resume-parser/save',  requireAdmin, diskUpload.single('resume'), adminController.saveOfflineCandidate);
 
 // Stats API
 router.get('/api/stats', requireAdmin, adminController.getStats);

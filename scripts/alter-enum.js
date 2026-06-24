@@ -11,11 +11,25 @@ async function run() {
     ssl: { rejectUnauthorized: false }
   });
 
-  const sql = "ALTER TABLE candidates MODIFY COLUMN positionApplying ENUM('FMCG Jaipur','FMCG Rajasthan','FMCG MPCG','Chief Digital Officer','Business Analyst','CTO','Raj Head- Radio','Jaipur Head- Radio','Delhi Head- Print','OOH Delhi','OOH Mumbai','Dy. Raj Head-Print') NOT NULL";
+  const alterations = [
+    "ALTER TABLE candidates ADD COLUMN linkedInProfile VARCHAR(500) AFTER email"
+  ];
 
-  await conn.execute(sql);
-  console.log('Done — NHM Marketing Analyst renamed to Business Analyst on RDS');
+  for (const sql of alterations) {
+    try {
+      await conn.execute(sql);
+      console.log('OK:', sql.slice(0, 60));
+    } catch (e) {
+      if (e.errno === 1060) {
+        console.log('Already exists, skipping:', sql.slice(0, 60));
+      } else {
+        throw e;
+      }
+    }
+  }
+
   await conn.end();
+  console.log('Done.');
 }
 
 run().catch(e => { console.error('ERROR:', e.message); process.exit(1); });

@@ -305,7 +305,7 @@ exports.saveOfflineCandidate = async (req, res) => {
       parsedSkills, parsedExperienceEntries, parsedEducation, parsedRawText
     } = req.body;
 
-    const candidate = await Candidate.create({
+    const candidateData = {
       fullName:        (fullName || '').trim(),
       contactNumber:   (contactNumber || '').trim(),
       email:           (email || '').trim().toLowerCase(),
@@ -320,7 +320,7 @@ exports.saveOfflineCandidate = async (req, res) => {
       parsedEmail:             (email || '').trim().toLowerCase(),
       parsedPhone:             (contactNumber || '').trim(),
       parsedLocation:          (currentLocation || '').trim(),
-      parsedSkills,
+      parsedSkills:            parsedSkills || '[]',
       parsedLinkedIn:          parsedLinkedIn || null,
       parsedSummary:           parsedSummary || null,
       parsedTotalExperience:   parsedTotalExperience || null,
@@ -331,8 +331,18 @@ exports.saveOfflineCandidate = async (req, res) => {
 
       submittedAt: new Date(),
       updatedAt:   new Date()
-    });
+    };
 
+    // Save resume file if uploaded
+    if (req.file) {
+      candidateData.resumeOriginalName = req.file.originalname;
+      candidateData.resumeStoredName   = req.file.filename;
+      candidateData.resumePath         = req.file.path;
+      candidateData.resumeMimetype     = req.file.mimetype;
+      candidateData.resumeSize         = req.file.size;
+    }
+
+    const candidate = await Candidate.create(candidateData);
     res.json({ success: true, candidateId: candidate.id });
   } catch (err) {
     console.error('Save offline candidate error:', err);

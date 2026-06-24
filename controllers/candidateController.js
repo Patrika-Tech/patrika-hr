@@ -20,7 +20,7 @@ exports.showForm = async (req, res) => {
 exports.submitForm = async (req, res) => {
   try {
     const {
-      fullName, contactNumber, email, currentLocation,
+      fullName, contactNumber, email, linkedInProfile, currentLocation,
       positionApplying, noticePeriod,
       packageFixed, packageVariables, packageOthers
     } = req.body;
@@ -29,6 +29,7 @@ exports.submitForm = async (req, res) => {
       fullName:        fullName.trim(),
       contactNumber:   contactNumber.trim(),
       email:           email.trim().toLowerCase(),
+      linkedInProfile: (linkedInProfile || '').trim() || null,
       currentLocation: currentLocation.trim(),
       positionApplying,
       noticePeriod,

@@ -122,6 +122,16 @@
                   <label class="detail-label">Current Location</label>
                   <div class="detail-value"><%= candidate.currentLocation %></div>
                 </div>
+                <% if (candidate.linkedInProfile) { %>
+                <div class="col-sm-12">
+                  <label class="detail-label"><i class="bi bi-linkedin me-1" style="color:#0a66c2;"></i>LinkedIn Profile</label>
+                  <div class="detail-value">
+                    <a href="<%= candidate.linkedInProfile %>" target="_blank" rel="noopener">
+                      <%= candidate.linkedInProfile %>
+                    </a>
+                  </div>
+                </div>
+                <% } %>
                 <div class="col-sm-6">
                   <label class="detail-label">Position Applied</label>
                   <div class="detail-value"><span class="badge bg-dark fs-6"><%= candidate.positionApplying %></span></div>
