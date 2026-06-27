@@ -157,7 +157,7 @@
                   <i class="bi bi-briefcase me-1 text-gold"></i>Position Applying For *
                 </label>
                 <div class="row g-2">
-                  <% const positions = ['Sales and Distribution Head Jaipur','Sales and Distribution Head Raj','Sales and Distribution Head MPCG','Business Analyst','Raj Head- Radio','Jaipur Head- Radio','Delhi Head- Print','OOH Delhi','OOH Mumbai','Dy. Raj Head-Print','VP Finance','VP IT & Transformation','Chartered Accountant','B2B Marketing Research']; %>
+                  <% const positions = ['Sales and Distribution Head Jaipur','Sales and Distribution Head Raj','Sales and Distribution Head MPCG','Business Analyst','Raj Head- Radio','Jaipur Head- Radio','Delhi Head- Print','OOH Delhi','OOH Mumbai','Dy. Raj Head-Print','VP Finance','VP IT & Transformation','Chartered Accountant','B2B Marketing Research','Business Head-Jaipur','Business Head-MP']; %>
                   <% positions.forEach(pos => { %>
                   <div class="col-md-6 col-lg-4">
                     <input type="radio" class="btn-check" name="positionApplying" id="pos_<%= pos.replace(/\s/g,'_') %>" value="<%= pos %>" required>
@@ -315,7 +315,9 @@
                 { name: 'VP Finance', dept: 'Finance', icon: 'cash-coin' },
                 { name: 'VP IT & Transformation', dept: 'IT', icon: 'pc-display' },
                 { name: 'Chartered Accountant', dept: 'Finance', icon: 'calculator' },
-                { name: 'B2B Marketing Research', dept: 'Marketing', icon: 'graph-up-arrow' }
+                { name: 'B2B Marketing Research', dept: 'Marketing', icon: 'graph-up-arrow' },
+                { name: 'Business Head-Jaipur', dept: 'Print Advertising', icon: 'building' },
+                { name: 'Business Head-MP', dept: 'Print Advertising', icon: 'building' }
               ]; %>
               <% posDetails.forEach(p => { %>
               <li class="list-group-item d-flex align-items-center py-2">
@@ -650,6 +652,60 @@
             <li>Internal Controls &amp; Risk Management</li>
             <li>MIS &amp; Business Analytics</li>
             <li>Team Leadership and Cross-functional Coordination</li>
+          </ul></div>`
+    },
+
+    'Business Head-Jaipur': {
+      badge: 'Jaipur, Rajasthan · Print Advertising · 10+ Yrs · Non-Media Background',
+      html: `
+        <div class="mb-3"><h6 class="fw-bold text-gold mb-1">Position Overview</h6>
+          <p class="mb-0">Rajasthan Patrika is seeking an experienced and result-oriented professional to drive advertisement revenue for its print business in Jaipur / Rajasthan. The incumbent will be responsible for developing and managing relationships with clients across Real Estate, Education and FMCG categories to generate advertising business for Rajasthan Patrika's print publications.</p></div>
+        <div class="mb-3"><h6 class="fw-bold text-gold mb-1">Key Responsibilities</h6>
+          <ul class="mb-0 ps-3">
+            <li>Generate advertisement revenue for Rajasthan Patrika's print publications.</li>
+            <li>Identify new business opportunities and acquire key accounts across the assigned markets.</li>
+            <li>Conceptualize and execute customized advertising solutions aligned with clients' marketing objectives.</li>
+            <li>Achieve assigned sales and revenue targets within the stipulated timelines.</li>
+            <li>Negotiate commercial terms and close high-value advertising deals.</li>
+            <li>Monitor market trends, competitor activities, new project launches, and industry developments.</li>
+            <li>Prepare sales forecasts, business plans, and revenue reports for management review.</li>
+          </ul></div>
+        <div class="mb-0"><h6 class="fw-bold text-gold mb-1">Desired Candidate Profile</h6>
+          <ul class="mb-0 ps-3">
+            <li>Non-media background preferred (Real Estate / Education / FMCG Sales).</li>
+            <li>Graduate/Postgraduate in Marketing, Business Administration, or a related field.</li>
+            <li>Minimum 10 years of experience in respective categories.</li>
+            <li>Strong network within the industry; proven track record of achieving revenue targets.</li>
+            <li>Excellent negotiation, presentation, and relationship management skills.</li>
+            <li>Understanding of media sales, advertising solutions, and brand marketing preferred.</li>
+            <li>Strong commercial acumen and market intelligence.</li>
+          </ul></div>`
+    },
+
+    'Business Head-MP': {
+      badge: 'Madhya Pradesh · Print Advertising · 10+ Yrs · Non-Media Background',
+      html: `
+        <div class="mb-3"><h6 class="fw-bold text-gold mb-1">Position Overview</h6>
+          <p class="mb-0">Rajasthan Patrika is seeking an experienced and result-oriented professional to drive advertisement revenue for its print business in Madhya Pradesh. The incumbent will be responsible for developing and managing relationships with clients across Real Estate, Education and FMCG categories to generate advertising business for Rajasthan Patrika's print publications.</p></div>
+        <div class="mb-3"><h6 class="fw-bold text-gold mb-1">Key Responsibilities</h6>
+          <ul class="mb-0 ps-3">
+            <li>Generate advertisement revenue for Rajasthan Patrika's print publications.</li>
+            <li>Identify new business opportunities and acquire key accounts across the assigned markets.</li>
+            <li>Conceptualize and execute customized advertising solutions aligned with clients' marketing objectives.</li>
+            <li>Achieve assigned sales and revenue targets within the stipulated timelines.</li>
+            <li>Negotiate commercial terms and close high-value advertising deals.</li>
+            <li>Monitor market trends, competitor activities, new project launches, and industry developments.</li>
+            <li>Prepare sales forecasts, business plans, and revenue reports for management review.</li>
+          </ul></div>
+        <div class="mb-0"><h6 class="fw-bold text-gold mb-1">Desired Candidate Profile</h6>
+          <ul class="mb-0 ps-3">
+            <li>Non-media background preferred (Real Estate / Education / FMCG Sales).</li>
+            <li>Graduate/Postgraduate in Marketing, Business Administration, or a related field.</li>
+            <li>Minimum 10 years of experience in respective categories.</li>
+            <li>Strong network within the industry; proven track record of achieving revenue targets.</li>
+            <li>Excellent negotiation, presentation, and relationship management skills.</li>
+            <li>Understanding of media sales, advertising solutions, and brand marketing preferred.</li>
+            <li>Strong commercial acumen and market intelligence.</li>
           </ul></div>`
     },
 
