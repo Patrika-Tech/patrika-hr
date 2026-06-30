@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const adminController = require('../controllers/adminController');
+const adminController    = require('../controllers/adminController');
+const detailFormController = require('../controllers/detailFormController');
 const { requireAdmin, redirectIfLoggedIn } = require('../middleware/auth');
 
 const path = require('path');
@@ -61,6 +62,10 @@ router.get('/candidates/export', requireAdmin, adminController.exportCandidates)
 // Grading
 router.post('/candidates/grade-all', requireAdmin, adminController.gradeAll);
 router.post('/candidate/:id/grade',  requireAdmin, adminController.gradeOne);
+
+// Personal Detail Form
+router.post('/candidate/:id/send-detail-form', requireAdmin, detailFormController.sendDetailForm);
+router.get('/candidate/:id/detail-form',       requireAdmin, detailFormController.viewDetailForm);
 
 // Positions Management
 router.get('/positions',              requireAdmin, adminController.listPositions);

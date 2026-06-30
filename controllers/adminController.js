@@ -1,4 +1,4 @@
-const { Candidate, Communication, Admin, Position } = require('../models');
+const { Candidate, Communication, Admin, Position, CandidateDetailForm } = require('../models');
 const { sequelize } = require('../config/db');
 const { sendEmail } = require('../utils/emailService');
 const { sendWhatsApp } = require('../utils/whatsappService');
@@ -115,21 +115,25 @@ exports.dashboard = async (req, res) => {
 
 exports.candidateDetail = async (req, res) => {
   try {
-    const candidate = await Candidate.findByPk(req.params.id, {
-      include: [{
-        model: Communication,
-        as:    'communications',
-        order: [['sentAt', 'DESC']]
-      }]
-    });
+    const [candidate, detailForm] = await Promise.all([
+      Candidate.findByPk(req.params.id, {
+        include: [{
+          model: Communication,
+          as:    'communications',
+          order: [['sentAt', 'DESC']]
+        }]
+      }),
+      CandidateDetailForm.findOne({ where: { candidateId: req.params.id }, order: [['createdAt','DESC']] })
+    ]);
     if (!candidate) return res.status(404).send('Candidate not found');
 
     res.render('admin/candidate-detail', {
-      title:     `${candidate.fullName} – Patrika HR`,
+      title:      `${candidate.fullName} – Patrika HR`,
       candidate,
-      adminName: req.session.adminName,
-      flash:     req.query.flash,
-      flashType: req.query.flashType || 'success'
+      detailForm: detailForm || null,
+      adminName:  req.session.adminName,
+      flash:      req.query.flash,
+      flashType:  req.query.flashType || 'success'
     });
   } catch (err) {
     console.error(err);

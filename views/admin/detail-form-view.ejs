@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/css/style.css?v=<%= v %>" rel="stylesheet">
+  <style>
+    .df-section { background:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:20px; }
+    .df-title { background:linear-gradient(90deg,#2d2d44,#3d3d5c); color:#f0c030; padding:10px 18px; font-size:.9rem; font-weight:700; border-radius:10px 10px 0 0; }
+    .df-body { padding:16px 20px; }
+    .df-label { font-size:.75rem; color:#888; font-weight:600; text-transform:uppercase; margin-bottom:2px; }
+    .df-value { font-size:.9rem; color:#333; margin-bottom:0; }
+    .df-table th { background:#f8f4e8; font-size:.78rem; }
+    .df-table td { font-size:.82rem; }
+    @media print { .no-print { display:none!important; } body { background:#fff; } }
+  </style>
+</head>
+<body class="admin-page">
+<div class="admin-wrapper">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-flex flex-column">
+    <div class="sidebar-brand">
+      <img src="/images/patrika-logo.png" alt="Patrika" class="sidebar-logo" onerror="this.style.display='none'">
+      <div>
+        <div class="fw-bold text-gold">Patrika HR</div>
+        <small class="text-white-50">Admin Panel</small>
+      </div>
+    </div>
+    <hr class="border-secondary my-2">
+    <ul class="nav flex-column px-2 flex-grow-1">
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/dashboard"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/positions"><i class="bi bi-briefcase-fill me-2"></i>Positions</a></li>
+    </ul>
+    <div class="px-2 pb-3">
+      <a href="/admin/logout" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      <p class="text-white-50 text-center mt-2 mb-0" style="font-size:11px;">Logged in as <strong><%= adminName %></strong></p>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-topbar d-flex align-items-center justify-content-between no-print">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/admin/candidate/<%= candidate.id %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <h5 class="mb-0 fw-bold"><i class="bi bi-file-person me-2 text-gold"></i>Personal Detail Form – <%= candidate.fullName %></h5>
+      </div>
+      <div class="d-flex gap-2">
+        <span class="badge bg-success px-3 py-2" style="font-size:.85rem;">
+          <i class="bi bi-check-circle me-1"></i>Submitted on <%= new Date(form.submittedAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %>
+        </span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+      </div>
+    </div>
+
+    <div class="p-4">
+
+      <!-- Basic Info -->
+      <div class="df-section">
+        <div class="df-title">Basic Information</div>
+        <div class="df-body">
+          <div class="row g-3">
+            <div class="col-md-3"><p class="df-label">Position</p><p class="df-value"><%= candidate.positionApplying %></p></div>
+            <div class="col-md-3"><p class="df-label">Total Experience</p><p class="df-value"><%= form.totalExperience || '—' %></p></div>
+            <div class="col-md-3"><p class="df-label">Joining Period</p><p class="df-value"><%= form.joiningPeriod || '—' %></p></div>
+            <div class="col-md-3"><p class="df-label">Department</p><p class="df-value"><%= form.department || '—' %></p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Details -->
+      <div class="df-section">
+        <div class="df-title">Personal Detail</div>
+        <div class="df-body">
+          <div class="row g-3">
+            <% if (form.photoPath) { %>
+            <div class="col-md-2 text-center">
+              <img src="/uploads/photos/<%= require('path').basename(form.photoPath) %>" style="width:110px;height:140px;object-fit:cover;border:2px solid #ddd;border-radius:6px;" alt="Photo">
+            </div>
+            <div class="col-md-10">
+            <% } else { %>
+            <div class="col-12">
+            <% } %>
+              <div class="row g-2">
+                <div class="col-md-3"><p class="df-label">Gender</p><p class="df-value"><%= form.gender||'—' %></p></div>
+                <div class="col-md-3"><p class="df-label">Date of Birth</p><p class="df-value"><%= form.dob||'—' %></p></div>
+                <div class="col-md-2"><p class="df-label">Age</p><p class="df-value"><%= form.age||'—' %></p></div>
+                <div class="col-md-4"><p class="df-label">Domicile</p><p class="df-value"><%= form.domicile||'—' %></p></div>
+                <div class="col-md-4"><p class="df-label">Marital Status</p><p class="df-value"><%= form.maritalStatus||'—' %></p></div>
+                <div class="col-md-4"><p class="df-label">Contact No.</p><p class="df-value"><%= candidate.contactNumber %></p></div>
+                <div class="col-md-4"><p class="df-label">Email</p><p class="df-value"><%= candidate.email %></p></div>
+                <div class="col-md-4"><p class="df-label">Father's Name</p><p class="df-value"><%= form.fatherName||'—' %></p></div>
+                <div class="col-md-4"><p class="df-label">Father's Contact</p><p class="df-value"><%= form.fatherContact||'—' %></p></div>
+                <div class="col-md-4"><p class="df-label">Spouse's Name</p><p class="df-value"><%= form.spouseName||'—' %></p></div>
+                <div class="col-md-4"><p class="df-label">Spouse's Contact</p><p class="df-value"><%= form.spouseContact||'—' %></p></div>
+                <div class="col-md-6"><p class="df-label">Present Address</p><p class="df-value" style="white-space:pre-wrap;"><%= form.presentAddress||'—' %></p></div>
+                <div class="col-md-6"><p class="df-label">Permanent Address</p><p class="df-value" style="white-space:pre-wrap;"><%= form.permanentAddress||'—' %></p></div>
+                <div class="col-md-6"><p class="df-label">ID Number (Aadhar/PAN/Passport)</p><p class="df-value"><%= form.idNumber||'—' %></p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Qualifications -->
+      <div class="df-section">
+        <div class="df-title">Academic &amp; Professional Qualification</div>
+        <div class="df-body">
+          <div class="table-responsive">
+            <table class="table table-bordered df-table">
+              <thead><tr><th>Degree</th><th>Institution</th><th>Board/University</th><th>Year</th><th>Subject</th><th>%</th></tr></thead>
+              <tbody>
+                <% if (qualifications.length === 0) { %>
+                <tr><td colspan="6" class="text-center text-muted">No data</td></tr>
+                <% } %>
+                <% qualifications.forEach(q => { %>
+                <tr>
+                  <td><%= q.degree %></td>
+                  <td><%= q.institution||'—' %></td>
+                  <td><%= q.board||'—' %></td>
+                  <td><%= q.yearOfPassing||'—' %></td>
+                  <td><%= q.subject||'—' %></td>
+                  <td><%= q.percentage||'—' %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6"><p class="df-label">IT Skills</p><p class="df-value"><%= form.itSkills||'—' %></p></div>
+            <div class="col-md-6"><p class="df-label">Professional Training / Courses</p><p class="df-value"><%= form.professionalTraining||'—' %></p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="df-section">
+        <div class="df-title">Experience</div>
+        <div class="df-body">
+          <div class="table-responsive">
+            <table class="table table-bordered df-table">
+              <thead><tr><th>Employer</th><th>From</th><th>To</th><th>Position</th><th>Type of Work</th><th>Reason Leaving</th><th>Annual CTC</th></tr></thead>
+              <tbody>
+                <% if (experiences.length === 0) { %>
+                <tr><td colspan="7" class="text-center text-muted">No data</td></tr>
+                <% } %>
+                <% experiences.forEach(e => { %>
+                <tr>
+                  <td style="white-space:pre-wrap;"><%= e.employer %></td>
+                  <td><%= e.fromDate||'—' %></td>
+                  <td><%= e.toDate||'—' %></td>
+                  <td><%= e.position||'—' %></td>
+                  <td><%= e.typeOfWork||'—' %></td>
+                  <td><%= e.reasonLeaving||'—' %></td>
+                  <td><%= e.annualCtc||'—' %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <div class="row g-2 mt-1">
+            <div class="col-12"><p class="df-label">Employment Gap</p><p class="df-value"><%= form.employmentGap||'—' %></p></div>
+            <div class="col-md-6"><p class="df-label">Engagement Term with Present Employer</p><p class="df-value"><%= form.engagementTerm ? 'Yes – '+form.engagementTermDetails : 'No' %></p></div>
+            <div class="col-md-6"><p class="df-label">Can Contact Present Employer</p><p class="df-value"><%= form.canContactEmployer ? 'Yes' : 'No' %></p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remuneration -->
+      <div class="df-section">
+        <div class="df-title">Present Remuneration</div>
+        <div class="df-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-4"><p class="df-label">Last Salary Revision</p><p class="df-value"><%= form.lastSalaryRevision||'—' %></p></div>
+            <div class="col-md-4"><p class="df-label">Next Salary Revision</p><p class="df-value"><%= form.nextSalaryRevision||'—' %></p></div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered df-table">
+              <thead><tr><th>Component</th><th>Amount (₹/month)</th><th>Statutory</th><th>Amount (₹/month)</th></tr></thead>
+              <tbody>
+                <% const salMap = [
+                  ['Basic', form.salBasic, 'PF', form.statPF],
+                  ['Dearness Allowance', form.salDA, 'ESI', form.statESI],
+                  ['HRA', form.salHRA, 'Gratuity', form.statGratuity],
+                  ['Conveyance', form.salConveyance, 'Medi Claim', form.statMediClaim],
+                  ['Medical', form.salMedical, 'Superannuation', form.statSuperannuation],
+                  ['Others', form.salOthers, 'Bonus/Ex. Gratia', form.statBonus],
+                  ['Incentives', form.salIncentives, 'Leave Travel Allowance', form.statLTA]
+                ];
+                const totalA = salMap.reduce((s,r)=>s+(parseFloat(r[1])||0),0);
+                const totalB = salMap.reduce((s,r)=>s+(parseFloat(r[3])||0),0);
+                %>
+                <% salMap.forEach(r => { %>
+                <tr>
+                  <td><%= r[0] %></td><td><%= r[1] ? '₹'+parseFloat(r[1]).toLocaleString() : '—' %></td>
+                  <td><%= r[2] %></td><td><%= r[3] ? '₹'+parseFloat(r[3]).toLocaleString() : '—' %></td>
+                </tr>
+                <% }) %>
+                <tr class="table-light fw-bold">
+                  <td>Total A</td><td>₹<%= totalA.toLocaleString() %></td>
+                  <td>Total B</td><td>₹<%= totalB.toLocaleString() %></td>
+                </tr>
+                <tr class="table-warning fw-bold">
+                  <td colspan="3">CTC Per Annum</td>
+                  <td>₹<%= form.ctcPerAnnum ? parseFloat(form.ctcPerAnnum).toLocaleString() : ((totalA+totalB)*12).toLocaleString() %></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- References -->
+      <div class="df-section">
+        <div class="df-title">References</div>
+        <div class="df-body">
+          <p class="fw-semibold small mb-1">Personal References</p>
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered df-table">
+              <thead><tr><th>Name</th><th>Relation</th><th>Location</th><th>Contact</th></tr></thead>
+              <tbody>
+                <% if (personalReferences.length === 0) { %><tr><td colspan="4" class="text-muted text-center">None</td></tr><% } %>
+                <% personalReferences.forEach(r => { %>
+                <tr><td><%= r.name %></td><td><%= r.relation||'—' %></td><td><%= r.location||'—' %></td><td><%= r.contact||'—' %></td></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <p class="fw-semibold small mb-1">Employment References</p>
+          <div class="table-responsive">
+            <table class="table table-bordered df-table">
+              <thead><tr><th>Name</th><th>Affiliation</th><th>Department</th><th>Location</th><th>Contact</th></tr></thead>
+              <tbody>
+                <% if (employmentReferences.length === 0) { %><tr><td colspan="5" class="text-muted text-center">None</td></tr><% } %>
+                <% employmentReferences.forEach(r => { %>
+                <tr><td><%= r.name %></td><td><%= r.affiliation||'—' %></td><td><%= r.department||'—' %></td><td><%= r.location||'—' %></td><td><%= r.contact||'—' %></td></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical -->
+      <div class="df-section">
+        <div class="df-title">Medical History</div>
+        <div class="df-body">
+          <div class="table-responsive">
+            <table class="table table-bordered df-table">
+              <thead><tr><th style="width:50%;">Question</th><th style="width:80px;">Response</th><th>Details</th></tr></thead>
+              <tbody>
+                <% const medRows = [
+                  ['Currently undergoing medical treatment?', form.medTreatment, null],
+                  ['Chronic medical conditions?', form.medChronic, form.medChronicDetails],
+                  ['Major surgeries/hospitalizations (past 5 years)?', form.medSurgeries, form.medSurgeriesDetails],
+                  ['Physical disabilities affecting job performance?', form.medDisabilities, form.medDisabilitiesDetails],
+                  ['Known allergies?', form.medAllergies, form.medAllergiesDetails],
+                  ['Tested positive for communicable diseases?', form.medCommunicable, form.medCommunicableDetails],
+                  ['Active Medi Claim / Health Insurance?', form.medHealthInsurance, null],
+                  ['Currently on prescribed/OTC medications?', form.medMedications, form.medMedicationsDetails]
+                ]; %>
+                <% medRows.forEach(r => { %>
+                <tr>
+                  <td><%= r[0] %></td>
+                  <td class="text-center">
+                    <% if (r[1] === null || r[1] === undefined) { %>
+                    <span class="text-muted">—</span>
+                    <% } else { %>
+                    <span class="badge bg-<%= r[1] ? 'warning text-dark' : 'secondary' %>"><%= r[1] ? 'Yes' : 'No' %></span>
+                    <% } %>
+                  </td>
+                  <td><%= r[2] || '—' %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- General -->
+      <div class="df-section">
+        <div class="df-title">General</div>
+        <div class="df-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <p class="df-label">Legal Civil/Criminal Suit Pending?</p>
+              <p class="df-value">
+                <span class="badge bg-<%= form.legalSuit ? 'danger' : 'success' %>"><%= form.legalSuit ? 'Yes' : 'No' %></span>
+                <% if (form.legalSuit && form.legalSuitDetails) { %>
+                <span class="ms-2 text-muted small"><%= form.legalSuitDetails %></span>
+                <% } %>
+              </p>
+            </div>
+            <div class="col-12">
+              <p class="df-label">Applied with Rajasthan Patrika Before?</p>
+              <p class="df-value">
+                <span class="badge bg-secondary"><%= form.appliedBefore ? 'Yes' : 'No' %></span>
+                <% if (form.appliedBefore) { %>
+                <span class="ms-2 text-muted small">Month: <%= form.appliedBeforeMonth %> | Dept: <%= form.appliedBeforeDept %> | Location: <%= form.appliedBeforeLocation %> | Position: <%= form.appliedBeforePosition %></span>
+                <% } %>
+              </p>
+            </div>
+            <% if (patrikaKnown.length > 0) { %>
+            <div class="col-12">
+              <p class="df-label">Known persons in Patrika Group</p>
+              <div class="table-responsive">
+                <table class="table table-bordered df-table" style="max-width:600px;">
+                  <thead><tr><th>Name</th><th>Department</th><th>Location</th><th>Contact</th></tr></thead>
+                  <tbody>
+                    <% patrikaKnown.forEach(p => { %>
+                    <tr><td><%= p.name %></td><td><%= p.department||'—' %></td><td><%= p.location||'—' %></td><td><%= p.contact||'—' %></td></tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

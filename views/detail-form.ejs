@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root { --gold:#c9941a; --dark:#1a1a2e; }
+    body { background:#f4f6fa; font-family:'Segoe UI',Arial,sans-serif; }
+    .form-header { background:linear-gradient(135deg,var(--dark),#8b6914); color:#fff; padding:28px 0; }
+    .form-header h1 { font-size:1.6rem; color:#f0c030; }
+    .section-card { background:#fff; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:24px; overflow:hidden; }
+    .section-title { background:linear-gradient(90deg,#2d2d44,#3d3d5c); color:#f0c030; padding:12px 20px; font-size:.95rem; font-weight:700; letter-spacing:.5px; }
+    .section-body { padding:20px; }
+    .form-label { font-weight:600; font-size:.82rem; color:#555; margin-bottom:3px; }
+    .form-control, .form-select { font-size:.9rem; border-color:#ddd; }
+    .form-control:focus, .form-select:focus { border-color:var(--gold); box-shadow:0 0 0 .15rem rgba(201,148,26,.2); }
+    .table-form th { background:#f8f4e8; font-size:.82rem; font-weight:600; color:#555; vertical-align:middle; }
+    .table-form td .form-control { border:1px solid #e0e0e0; font-size:.82rem; }
+    .yes-no-group .btn-check:checked + .btn { background-color:var(--gold); border-color:var(--gold); color:#fff; }
+    .yes-no-group .btn-outline-secondary { font-size:.85rem; padding:5px 16px; }
+    .med-row { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+    .med-row:last-child { border-bottom:none; }
+    .med-question { flex:0 0 45%; font-size:.87rem; color:#333; padding-top:4px; }
+    .med-yesno { flex:0 0 100px; }
+    .med-details { flex:1; }
+    .step-indicator { display:flex; gap:0; margin-bottom:20px; }
+    .step { flex:1; text-align:center; padding:8px 4px; font-size:.78rem; font-weight:600; border-bottom:3px solid #ddd; color:#999; cursor:pointer; }
+    .step.active { border-color:var(--gold); color:var(--gold); }
+    .step.done { border-color:#28a745; color:#28a745; }
+    .form-section { display:none; }
+    .form-section.active { display:block; }
+    .btn-gold { background:linear-gradient(135deg,#c9941a,#8b6914); color:#fff; border:none; }
+    .btn-gold:hover { background:linear-gradient(135deg,#b8830f,#7a5800); color:#fff; }
+    .photo-preview { width:120px; height:150px; border:2px dashed #ddd; border-radius:6px; object-fit:cover; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:#aaa; text-align:center; overflow:hidden; }
+    .photo-preview img { width:100%; height:100%; object-fit:cover; }
+    .required-star { color:#dc3545; }
+    .declaration-box { background:#fff8e1; border:1px solid #f0c030; border-radius:8px; padding:16px; font-size:.85rem; color:#333; line-height:1.7; }
+  </style>
+</head>
+<body>
+
+<div class="form-header text-center">
+  <h1><i class="bi bi-file-person me-2"></i>Personal Detail Form</h1>
+  <p class="mb-0 text-white-50" style="font-size:.9rem;">Patrika Group – HR Recruitment | Please fill all sections carefully</p>
+  <% if (candidate) { %>
+  <p class="mb-0 mt-1" style="font-size:.95rem;color:#ffe;">
+    For: <strong><%= candidate.fullName %></strong> &nbsp;|&nbsp; Position: <strong><%= candidate.positionApplying %></strong>
+  </p>
+  <% } %>
+</div>
+
+<div class="container" style="max-width:900px;padding:30px 16px 60px;">
+
+  <!-- Step indicator -->
+  <div class="step-indicator">
+    <div class="step active" id="step1-btn" onclick="goStep(1)">1. Personal Details</div>
+    <div class="step" id="step2-btn" onclick="goStep(2)">2. Qualification &amp; Experience</div>
+    <div class="step" id="step3-btn" onclick="goStep(3)">3. Salary &amp; References</div>
+    <div class="step" id="step4-btn" onclick="goStep(4)">4. Medical &amp; General</div>
+  </div>
+
+  <form method="POST" action="/detail-form/<%= token %>" enctype="multipart/form-data" id="detailForm">
+
+    <!-- ══ STEP 1: Personal Details ══════════════════════════════════════════ -->
+    <div class="form-section active" id="step1">
+
+      <!-- Header info -->
+      <div class="section-card">
+        <div class="section-title">Basic Information</div>
+        <div class="section-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Name (In Capitals) <span class="required-star">*</span></label>
+              <input type="text" class="form-control" name="fullName" value="<%= candidate ? candidate.fullName.toUpperCase() : '' %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Position Applied For</label>
+              <input type="text" class="form-control" name="department" value="<%= candidate ? candidate.positionApplying : '' %>" readonly>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Total Experience</label>
+              <input type="text" class="form-control" name="totalExperience" value="<%= candidate ? (candidate.parsedTotalExperience||'') : '' %>" placeholder="e.g. 8 years">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Joining Period</label>
+              <input type="text" class="form-control" name="joiningPeriod" placeholder="e.g. Immediate / 30 days">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-control" name="department2" placeholder="Department">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Details + Photo -->
+      <div class="section-card">
+        <div class="section-title">Personal Detail</div>
+        <div class="section-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Gender <span class="required-star">*</span></label>
+                  <select class="form-select" name="gender" required>
+                    <option value="">Select</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Date of Birth <span class="required-star">*</span></label>
+                  <input type="date" class="form-control" name="dob" required onchange="calcAge(this)">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Age</label>
+                  <input type="text" class="form-control" name="age" id="ageField" readonly placeholder="Auto">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Domicile</label>
+                  <input type="text" class="form-control" name="domicile" placeholder="State">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Contact No. <span class="required-star">*</span></label>
+                  <input type="tel" class="form-control" name="contactNo" value="<%= candidate ? candidate.contactNumber : '' %>" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email <span class="required-star">*</span></label>
+                  <input type="email" class="form-control" name="emailAddr" value="<%= candidate ? candidate.email : '' %>" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Marital Status</label>
+                  <select class="form-select" name="maritalStatus">
+                    <option value="">Select</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 d-flex flex-column align-items-center">
+              <label class="form-label text-center w-100">Photograph</label>
+              <div class="photo-preview" id="photoPreview">
+                <span><i class="bi bi-camera" style="font-size:2rem;"></i><br>Click to upload</span>
+              </div>
+              <input type="file" class="form-control mt-2" name="photo" accept="image/jpeg,image/png"
+                style="font-size:.8rem;" onchange="previewPhoto(this)">
+              <small class="text-muted mt-1" style="font-size:.75rem;">JPG/PNG, max 3MB</small>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Father's Name</label>
+              <input type="text" class="form-control" name="fatherName">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Father's Contact No.</label>
+              <input type="tel" class="form-control" name="fatherContact">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Spouse's Name</label>
+              <input type="text" class="form-control" name="spouseName">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Spouse's Contact No.</label>
+              <input type="tel" class="form-control" name="spouseContact">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Present Address <span class="required-star">*</span></label>
+              <textarea class="form-control" name="presentAddress" rows="2" required></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Permanent Address</label>
+              <textarea class="form-control" name="permanentAddress" rows="2"></textarea>
+              <div class="form-check mt-1">
+                <input class="form-check-input" type="checkbox" id="sameAddr" onchange="copyAddr(this)">
+                <label class="form-check-label" for="sameAddr" style="font-size:.82rem;">Same as Present Address</label>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Aadhar Card No. / PAN Card No. / Passport No. (Any One)</label>
+              <input type="text" class="form-control" name="idNumber" placeholder="Enter any one ID number">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="button" class="btn btn-gold px-4" onclick="goStep(2)">Next: Qualification <i class="bi bi-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 2: Qualification & Experience ════════════════════════════════ -->
+    <div class="form-section" id="step2">
+
+      <div class="section-card">
+        <div class="section-title">Academic &amp; Professional Qualification</div>
+        <div class="section-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-form align-middle">
+              <thead>
+                <tr>
+                  <th style="width:130px;">Degree/Exam</th>
+                  <th>Name of Institution</th>
+                  <th>Board/University</th>
+                  <th style="width:100px;">Year of Passing</th>
+                  <th>Subject</th>
+                  <th style="width:90px;">% of Marks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% ['10th','12th','Graduation','PG','Others'].forEach(d => {
+                     const key = d.replace('/','_').replace(' ','_'); %>
+                <tr>
+                  <td class="fw-semibold" style="font-size:.82rem;"><%= d %></td>
+                  <td><input type="text" class="form-control form-control-sm" name="qual_inst_<%= key %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="qual_board_<%= key %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="qual_year_<%= key %>" placeholder="YYYY"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="qual_subj_<%= key %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="qual_pct_<%= key %>" placeholder="%"></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label class="form-label">IT Skills</label>
+              <input type="text" class="form-control" name="itSkills" placeholder="e.g. MS Office, Tally, Excel">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Specialized Professional Training / Courses</label>
+              <input type="text" class="form-control" name="professionalTraining" placeholder="Courses, certifications">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">Experience (Begin with Current Employer)</div>
+        <div class="section-body">
+          <% for(let i=1;i<=5;i++) { %>
+          <div class="border rounded p-3 mb-3" style="background:#fafafa;">
+            <div class="fw-semibold small mb-2 text-muted">Employer #<%= i %></div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Name &amp; Address of Employer</label>
+                <textarea class="form-control form-control-sm" name="exp_employer_<%= i %>" rows="2" placeholder="Company name and address"></textarea>
+              </div>
+              <div class="col-md-6">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label">From</label>
+                    <input type="month" class="form-control form-control-sm" name="exp_from_<%= i %>">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">To</label>
+                    <input type="month" class="form-control form-control-sm" name="exp_to_<%= i %>">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Position / Designation</label>
+                <input type="text" class="form-control form-control-sm" name="exp_position_<%= i %>">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Type of Work</label>
+                <input type="text" class="form-control form-control-sm" name="exp_type_<%= i %>">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Annual CTC</label>
+                <input type="text" class="form-control form-control-sm" name="exp_ctc_<%= i %>" placeholder="₹ in Lakhs">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Reason for Leaving</label>
+                <input type="text" class="form-control form-control-sm" name="exp_reason_<%= i %>">
+              </div>
+            </div>
+          </div>
+          <% } %>
+
+          <div class="row g-3 mt-1">
+            <div class="col-12">
+              <label class="form-label">Please enumerate on the nature of engagement during gap (if any)</label>
+              <textarea class="form-control" name="employmentGap" rows="2" placeholder="Describe any employment gaps"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label d-block">Are you under any specific engagement term with present employer?</label>
+              <div class="yes-no-group btn-group" role="group">
+                <input type="radio" class="btn-check" name="engagementTerm" id="et_yes" value="1" autocomplete="off">
+                <label class="btn btn-outline-secondary" for="et_yes">Yes</label>
+                <input type="radio" class="btn-check" name="engagementTerm" id="et_no" value="0" autocomplete="off" checked>
+                <label class="btn btn-outline-secondary" for="et_no">No</label>
+              </div>
+              <input type="text" class="form-control mt-2" name="engagementTermDetails" placeholder="If yes, please specify">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label d-block">Can we communicate with your present employer?</label>
+              <div class="yes-no-group btn-group" role="group">
+                <input type="radio" class="btn-check" name="canContactEmployer" id="ce_yes" value="1" autocomplete="off">
+                <label class="btn btn-outline-secondary" for="ce_yes">Yes</label>
+                <input type="radio" class="btn-check" name="canContactEmployer" id="ce_no" value="0" autocomplete="off" checked>
+                <label class="btn btn-outline-secondary" for="ce_no">No</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary px-4" onclick="goStep(1)"><i class="bi bi-arrow-left me-1"></i> Back</button>
+        <button type="button" class="btn btn-gold px-4" onclick="goStep(3)">Next: Salary <i class="bi bi-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 3: Salary & References ════════════════════════════════════════ -->
+    <div class="form-section" id="step3">
+
+      <div class="section-card">
+        <div class="section-title">Present Remuneration Details</div>
+        <div class="section-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Date of Last Salary Revision</label>
+              <input type="month" class="form-control" name="lastSalaryRevision">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Date of Next Salary Revision</label>
+              <input type="month" class="form-control" name="nextSalaryRevision">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-form">
+              <thead>
+                <tr>
+                  <th>Compensation Element</th>
+                  <th style="width:160px;">Amount (Monthly ₹)</th>
+                  <th>Statutory &amp; Others</th>
+                  <th style="width:160px;">Amount (Monthly ₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% const salRows = [
+                  ['Basic','salBasic','PF','statPF'],
+                  ['Dearness Allowance','salDA','ESI','statESI'],
+                  ['House Rent Allowance','salHRA','Gratuity','statGratuity'],
+                  ['Conveyance Allowance','salConveyance','Medi Claim','statMediClaim'],
+                  ['Medical','salMedical','Superannuation','statSuperannuation'],
+                  ['Others','salOthers','Bonus / Ex. Gratia','statBonus'],
+                  ['Incentives (if any)','salIncentives','Leave Travel Allowance','statLTA'],
+                ]; %>
+                <% salRows.forEach(r => { %>
+                <tr>
+                  <td style="font-size:.83rem;"><%= r[0] %></td>
+                  <td><input type="number" class="form-control form-control-sm sal-input" name="<%= r[1] %>" placeholder="0" step="0.01" min="0" onchange="calcCTC()"></td>
+                  <td style="font-size:.83rem;"><%= r[2] %></td>
+                  <td><input type="number" class="form-control form-control-sm sal-input" name="<%= r[3] %>" placeholder="0" step="0.01" min="0" onchange="calcCTC()"></td>
+                </tr>
+                <% }) %>
+                <tr class="table-light fw-bold">
+                  <td>Total A</td>
+                  <td><input type="text" class="form-control form-control-sm" id="totalA" readonly placeholder="Auto"></td>
+                  <td>Total B</td>
+                  <td><input type="text" class="form-control form-control-sm" id="totalB" readonly placeholder="Auto"></td>
+                </tr>
+                <tr class="table-warning fw-bold">
+                  <td colspan="3">CTC (Per Annum) = (Total A + Total B) × 12</td>
+                  <td>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">₹</span>
+                      <input type="number" class="form-control" name="ctcPerAnnum" id="ctcPA" step="0.01" min="0" placeholder="Annual CTC">
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">References</div>
+        <div class="section-body">
+          <p class="text-muted small mb-2"><strong>Personal References</strong> (Family &amp; Friends)</p>
+          <div class="table-responsive mb-4">
+            <table class="table table-bordered table-form">
+              <thead>
+                <tr><th>Name</th><th>Relation</th><th>Location</th><th>Contact No.</th></tr>
+              </thead>
+              <tbody>
+                <% for(let i=1;i<=2;i++) { %>
+                <tr>
+                  <td><input type="text" class="form-control form-control-sm" name="pref_name_<%= i %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="pref_relation_<%= i %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="pref_location_<%= i %>"></td>
+                  <td><input type="tel" class="form-control form-control-sm" name="pref_contact_<%= i %>"></td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-muted small mb-2"><strong>Employment References</strong> (Persons associated with your education/work experience)</p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-form">
+              <thead>
+                <tr><th>Name</th><th>Affiliation</th><th>Department</th><th>Location</th><th>Contact No.</th></tr>
+              </thead>
+              <tbody>
+                <% for(let i=1;i<=2;i++) { %>
+                <tr>
+                  <td><input type="text" class="form-control form-control-sm" name="eref_name_<%= i %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="eref_affiliation_<%= i %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="eref_dept_<%= i %>"></td>
+                  <td><input type="text" class="form-control form-control-sm" name="eref_location_<%= i %>"></td>
+                  <td><input type="tel" class="form-control form-control-sm" name="eref_contact_<%= i %>"></td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary px-4" onclick="goStep(2)"><i class="bi bi-arrow-left me-1"></i> Back</button>
+        <button type="button" class="btn btn-gold px-4" onclick="goStep(4)">Next: Medical &amp; General <i class="bi bi-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 4: Medical & General ══════════════════════════════════════════ -->
+    <div class="form-section" id="step4">
+
+      <div class="section-card">
+        <div class="section-title">Medical History</div>
+        <div class="section-body">
+          <% const medQs = [
+            { key:'medTreatment', q:'Are you currently undergoing any medical treatment?', detail:null },
+            { key:'medChronic', q:'Do you have any chronic medical conditions? (e.g., Diabetes, Hypertension, etc.)', detail:'chronic' },
+            { key:'medSurgeries', q:'Have you undergone any major surgeries or hospitalizations in the past five years?', detail:'medSurgeriesDetails', placeholder:'Reason & Year' },
+            { key:'medDisabilities', q:'Do you have any physical disabilities or limitations that could affect your job performance?', detail:'medDisabilitiesDetails', placeholder:'Please specify' },
+            { key:'medAllergies', q:'Do you have any known allergies (medications, food, environment)?', detail:'medAllergiesDetails', placeholder:'Please specify' },
+            { key:'medCommunicable', q:'Have you tested positive for any communicable diseases (e.g., TB, Hepatitis, COVID-19)?', detail:'medCommunicableDetails', placeholder:'Details & Recovery Year' },
+            { key:'medHealthInsurance', q:'Do you currently have an active Medi Claim or Health Insurance policy?', detail:null },
+            { key:'medMedications', q:'Are you currently on any prescribed or over-the-counter medications?', detail:'medMedicationsDetails', placeholder:'Medication & Purpose' },
+          ]; %>
+
+          <% medQs.forEach((q,i) => { %>
+          <div class="med-row">
+            <div class="med-question"><%= q.q %></div>
+            <div class="med-yesno">
+              <div class="yes-no-group btn-group btn-group-sm" role="group">
+                <input type="radio" class="btn-check" name="<%= q.key %>" id="<%= q.key %>_y" value="1" autocomplete="off" onchange="showMedDetail('<%= q.key %>')">
+                <label class="btn btn-outline-secondary" for="<%= q.key %>_y">Yes</label>
+                <input type="radio" class="btn-check" name="<%= q.key %>" id="<%= q.key %>_n" value="0" autocomplete="off" checked onchange="showMedDetail('<%= q.key %>')">
+                <label class="btn btn-outline-secondary" for="<%= q.key %>_n">No</label>
+              </div>
+            </div>
+            <div class="med-details" id="<%= q.key %>_detail" style="display:none;">
+              <% if (q.detail === 'chronic') { %>
+                <div class="d-flex flex-wrap gap-2 mb-1">
+                  <% ['Diabetes','Hypertension','Asthma','Heart Disease','Epilepsy','Thyroid'].forEach(c => { %>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="med_chronic_<%= c.replace(' ','_') %>" id="chk_<%= c.replace(' ','_') %>">
+                    <label class="form-check-label" for="chk_<%= c.replace(' ','_') %>" style="font-size:.82rem;"><%= c %></label>
+                  </div>
+                  <% }) %>
+                </div>
+                <input type="text" class="form-control form-control-sm" name="med_chronic_other" placeholder="Other condition (specify)">
+              <% } else if (q.detail) { %>
+                <input type="text" class="form-control form-control-sm" name="<%= q.detail %>" placeholder="<%= q.placeholder || 'Details' %>">
+              <% } %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">General</div>
+        <div class="section-body">
+          <div class="mb-3">
+            <label class="form-label d-block">Is there any legal civil/criminal suit pending/under process against you?</label>
+            <div class="yes-no-group btn-group btn-group-sm mb-2" role="group">
+              <input type="radio" class="btn-check" name="legalSuit" id="ls_y" value="1" autocomplete="off" onchange="showMedDetail('legalSuit')">
+              <label class="btn btn-outline-secondary" for="ls_y">Yes</label>
+              <input type="radio" class="btn-check" name="legalSuit" id="ls_n" value="0" autocomplete="off" checked onchange="showMedDetail('legalSuit')">
+              <label class="btn btn-outline-secondary" for="ls_n">No</label>
+            </div>
+            <div id="legalSuit_detail" style="display:none;">
+              <textarea class="form-control" name="legalSuitDetails" rows="2" placeholder="Please provide details"></textarea>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label d-block">Have you applied with Rajasthan Patrika before?</label>
+            <div class="yes-no-group btn-group btn-group-sm mb-2" role="group">
+              <input type="radio" class="btn-check" name="appliedBefore" id="ab_y" value="1" autocomplete="off" onchange="toggleAppliedBefore(true)">
+              <label class="btn btn-outline-secondary" for="ab_y">Yes</label>
+              <input type="radio" class="btn-check" name="appliedBefore" id="ab_n" value="0" autocomplete="off" checked onchange="toggleAppliedBefore(false)">
+              <label class="btn btn-outline-secondary" for="ab_n">No</label>
+            </div>
+            <div id="appliedBeforeDetails" style="display:none;">
+              <div class="row g-2">
+                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="appliedBeforeMonth" placeholder="Month"></div>
+                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="appliedBeforeDept" placeholder="Department"></div>
+                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="appliedBeforeLocation" placeholder="Location"></div>
+                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="appliedBeforePosition" placeholder="Position"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Is anyone working in Patrika Group who is directly/indirectly known to you or is your friend or relative?</label>
+            <div class="table-responsive mt-2">
+              <table class="table table-bordered table-form">
+                <thead><tr><th>Name</th><th>Department</th><th>Location</th><th>Contact Number</th></tr></thead>
+                <tbody>
+                  <% for(let i=1;i<=3;i++) { %>
+                  <tr>
+                    <td><input type="text" class="form-control form-control-sm" name="pk_name_<%= i %>"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="pk_dept_<%= i %>"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="pk_loc_<%= i %>"></td>
+                    <td><input type="tel" class="form-control form-control-sm" name="pk_contact_<%= i %>"></td>
+                  </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Declaration -->
+      <div class="section-card">
+        <div class="section-title">Declaration</div>
+        <div class="section-body">
+          <div class="declaration-box mb-3">
+            I hereby certify that the information furnished by me above are true and to the best of my knowledge and belief.
+            Further I have never been indicted/convicted for any criminal/civil offense. Any deviation from the above mentioned
+            information would attract cancellation/termination of my candidature and/or employment and I shall be solely
+            responsible for any legal aspect pertaining to above facts.
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" name="declarationDate" value="<%= new Date().toISOString().split('T')[0] %>" readonly>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Location <span class="required-star">*</span></label>
+              <input type="text" class="form-control" name="declarationLocation" placeholder="City/Location" required>
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="declarationCheck" required>
+                <label class="form-check-label fw-semibold" for="declarationCheck">
+                  I agree to the above declaration and confirm that all information provided is accurate.
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary px-4" onclick="goStep(3)"><i class="bi bi-arrow-left me-1"></i> Back</button>
+        <button type="submit" class="btn btn-gold btn-lg px-5" id="submitBtn">
+          <i class="bi bi-send-check me-2"></i>Submit Personal Detail Form
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let currentStep = 1;
+
+  function goStep(n) {
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.getElementById(`step${currentStep}-btn`).classList.remove('active');
+    document.getElementById(`step${currentStep}-btn`).classList.add('done');
+    currentStep = n;
+    document.getElementById(`step${n}`).classList.add('active');
+    document.getElementById(`step${n}-btn`).classList.add('active');
+    document.getElementById(`step${n}-btn`).classList.remove('done');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function calcAge(input) {
+    const dob = new Date(input.value);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    document.getElementById('ageField').value = age > 0 ? age : '';
+  }
+
+  function copyAddr(cb) {
+    const pa = document.querySelector('[name="presentAddress"]').value;
+    const perm = document.querySelector('[name="permanentAddress"]');
+    perm.value = cb.checked ? pa : '';
+  }
+
+  function calcCTC() {
+    const aFields = ['salBasic','salDA','salHRA','salConveyance','salMedical','salOthers','salIncentives'];
+    const bFields = ['statPF','statESI','statGratuity','statMediClaim','statSuperannuation','statBonus','statLTA'];
+    const sum = (fields) => fields.reduce((s, n) => s + (parseFloat(document.querySelector(`[name="${n}"]`)?.value)||0), 0);
+    const a = sum(aFields), b = sum(bFields);
+    document.getElementById('totalA').value = a.toFixed(2);
+    document.getElementById('totalB').value = b.toFixed(2);
+    document.getElementById('ctcPA').value = ((a + b) * 12).toFixed(2);
+  }
+
+  function showMedDetail(key) {
+    const yesRadio = document.getElementById(key + '_y') || document.getElementById('ls_y');
+    const detail   = document.getElementById(key + '_detail');
+    if (!detail) return;
+    const checked = document.querySelector(`[name="${key}"]:checked`);
+    detail.style.display = (checked && checked.value === '1') ? 'block' : 'none';
+  }
+
+  function toggleAppliedBefore(show) {
+    document.getElementById('appliedBeforeDetails').style.display = show ? 'block' : 'none';
+  }
+
+  function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const p = document.getElementById('photoPreview');
+        p.innerHTML = `<img src="${e.target.result}" alt="photo">`;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  document.getElementById('detailForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+  });
+</script>
+</body>
+</html>

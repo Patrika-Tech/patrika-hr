@@ -217,6 +217,47 @@
           </div>
           <% } %>
 
+          <!-- Personal Detail Form -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-file-person me-2 text-gold"></i>Personal Detail Form</h6>
+              <% if (detailForm && detailForm.status === 'submitted') { %>
+              <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Submitted</span>
+              <% } else if (detailForm && detailForm.status === 'pending') { %>
+              <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending Response</span>
+              <% } else { %>
+              <span class="badge bg-secondary">Not Sent</span>
+              <% } %>
+            </div>
+            <div class="card-body">
+              <% if (detailForm && detailForm.status === 'submitted') { %>
+              <p class="text-muted small mb-2">Submitted on <%= new Date(detailForm.submittedAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %></p>
+              <div class="d-flex gap-2">
+                <a href="/admin/candidate/<%= candidate.id %>/detail-form" class="btn btn-sm btn-gold">
+                  <i class="bi bi-eye me-1"></i>View Filled Form
+                </a>
+                <button class="btn btn-sm btn-outline-secondary" id="resendFormBtn" onclick="sendDetailForm()">
+                  <i class="bi bi-send me-1"></i>Resend Form
+                </button>
+              </div>
+              <% } else if (detailForm && detailForm.status === 'pending') { %>
+              <p class="text-muted small mb-2">
+                Link sent – expires <%= new Date(detailForm.tokenExpiresAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %>.
+                Candidate has not filled it yet.
+              </p>
+              <button class="btn btn-sm btn-outline-secondary" id="resendFormBtn" onclick="sendDetailForm()">
+                <i class="bi bi-send me-1"></i>Resend New Link
+              </button>
+              <% } else { %>
+              <p class="text-muted small mb-3">Send the Personal Detail Form link to the candidate's email. They will fill it online and the response will be saved here.</p>
+              <button class="btn btn-sm btn-gold" id="sendFormBtn" onclick="sendDetailForm()">
+                <i class="bi bi-send me-1"></i>Send Detail Form to Candidate
+              </button>
+              <% } %>
+              <div id="formSendResult" class="mt-2"></div>
+            </div>
+          </div>
+
           <!-- Resume Card -->
           <div class="card shadow-sm mb-4">
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-file-earmark-person me-2"></i>Resume / CV</h6></div>
@@ -583,6 +624,27 @@
         if (d.success) window.location = '/admin/dashboard';
         else alert('Delete failed: ' + d.message);
       });
+  }
+
+  async function sendDetailForm() {
+    const btn = document.getElementById('sendFormBtn') || document.getElementById('resendFormBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...'; }
+    try {
+      const r = await fetch('/admin/candidate/<%= candidate.id %>/send-detail-form', { method: 'POST' });
+      const d = await r.json();
+      const el = document.getElementById('formSendResult');
+      if (d.success) {
+        if (el) el.innerHTML = `<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle me-1"></i>${d.message}</div>`;
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        if (el) el.innerHTML = `<div class="alert alert-danger py-2 small mb-0">${d.message}</div>`;
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send me-1"></i>Send Detail Form'; }
+      }
+    } catch(e) {
+      const el = document.getElementById('formSendResult');
+      if (el) el.innerHTML = `<div class="alert alert-danger py-2 small mb-0">Network error: ${e.message}</div>`;
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send me-1"></i>Send Detail Form'; }
+    }
   }
 </script>
 </body>

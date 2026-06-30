@@ -4,8 +4,9 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const path = require('path');
 const { connectDB } = require('./config/db');
-const candidateRoutes = require('./routes/candidateRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const candidateRoutes  = require('./routes/candidateRoutes');
+const adminRoutes      = require('./routes/adminRoutes');
+const detailFormRoutes = require('./routes/detailFormRoutes');
 const { generateQR } = require('./utils/qrGenerator');
 
 const app = express();
@@ -36,6 +37,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
   etag: false
 }));
 
+// Serve uploaded photos (candidate detail form)
+app.use('/uploads/photos', express.static(path.join(__dirname, 'uploads/photos')));
+
 // Disable HTML page caching — skip preview routes (browser PDF viewer breaks with no-store)
 app.use((req, res, next) => {
   if (req.path.endsWith('/preview')) return next();
@@ -63,6 +67,7 @@ app.use(session({
 
 // Routes
 app.use('/', candidateRoutes);
+app.use('/', detailFormRoutes);
 app.use('/admin', adminRoutes);
 
 // 404
