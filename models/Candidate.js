@@ -59,6 +59,7 @@ const Candidate = sequelize.define('Candidate', {
   gradeScore:  { type: DataTypes.INTEGER },
   gradeReason: { type: DataTypes.TEXT },
   gradeSource: { type: DataTypes.STRING(20) },
+  analystReport: { type: DataTypes.TEXT('long') }, // full Talent Analyst JSON report
 
   // ── Virtuals (keep view templates unchanged from MongoDB version) ────────────
 

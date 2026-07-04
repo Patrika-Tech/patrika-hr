@@ -107,10 +107,11 @@ exports.submitForm = async (req, res) => {
           const gradeResult = await computeGradeAsync(gradedCandidate, pos ? pos.jdHtml : '', positionApplying);
           await Candidate.update({
             ...parsedFields,
-            grade:       gradeResult.grade,
-            gradeScore:  gradeResult.score,
-            gradeReason: gradeResult.gradeReason,
-            gradeSource: gradeResult.gradeSource
+            grade:         gradeResult.grade,
+            gradeScore:    gradeResult.score,
+            gradeReason:   gradeResult.gradeReason,
+            gradeSource:   gradeResult.gradeSource,
+            analystReport: gradeResult.analystReport || null
           }, { where: { id: candidate.id } });
         })
         .catch(err => console.error('Parse save error:', err.message));

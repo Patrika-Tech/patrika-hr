@@ -641,11 +641,12 @@ exports.gradeAll = async (req, res) => {
       const pos = posMap[c.positionApplying] || {};
       const result = await computeGradeAsync(c, pos.jdHtml || '', pos.name || c.positionApplying);
       await c.update({
-        grade:       result.grade,
-        gradeScore:  result.score,
-        gradeReason: result.gradeReason,
-        gradeSource: result.gradeSource,
-        updatedAt:   new Date()
+        grade:         result.grade,
+        gradeScore:    result.score,
+        gradeReason:   result.gradeReason,
+        gradeSource:   result.gradeSource,
+        analystReport: result.analystReport || c.analystReport,
+        updatedAt:     new Date()
       });
       updated++;
     }
@@ -663,11 +664,12 @@ exports.gradeOne = async (req, res) => {
     const pos = await Position.findOne({ where: { name: c.positionApplying } });
     const result = await computeGradeAsync(c, pos ? (pos.jdHtml || '') : '', c.positionApplying);
     await c.update({
-      grade:       result.grade,
-      gradeScore:  result.score,
-      gradeReason: result.gradeReason,
-      gradeSource: result.gradeSource,
-      updatedAt:   new Date()
+      grade:         result.grade,
+      gradeScore:    result.score,
+      gradeReason:   result.gradeReason,
+      gradeSource:   result.gradeSource,
+      analystReport: result.analystReport || c.analystReport,
+      updatedAt:     new Date()
     });
     res.json({ success: true, grade: result.grade, score: result.score, source: result.gradeSource, reason: result.gradeReason });
   } catch (err) {

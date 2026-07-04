@@ -253,7 +253,7 @@
                   <td><span class="badge bg-dark" style="font-size:10px;"><%= c.positionApplying %></span></td>
                   <td class="text-center">
                     <% if (c.grade) {
-                      const src = c.gradeSource === 'ai' ? '🤖 AI' : '🔑 Keyword';
+                      const src = c.gradeSource === 'ai-analyst' ? '🧠 Talent Analyst' : c.gradeSource === 'ai' ? '🤖 AI' : '🔑 Keyword';
                       const tip = `${src} | Score: ${c.gradeScore}\n${c.gradeReason || ''}`;
                     %>
                     <span class="badge bg-<%= gc[c.grade]||'secondary' %> px-2"
@@ -261,7 +261,7 @@
                       data-bs-toggle="tooltip" data-bs-placement="left"
                       title="<%= tip.replace(/"/g,'&quot;') %>">
                       <%= c.grade %>
-                      <% if (c.gradeSource === 'ai') { %><i class="bi bi-stars" style="font-size:10px;"></i><% } %>
+                      <% if (c.gradeSource === 'ai-analyst') { %><i class="bi bi-cpu" style="font-size:10px;"></i><% } else if (c.gradeSource === 'ai') { %><i class="bi bi-stars" style="font-size:10px;"></i><% } %>
                     </span>
                     <% } else { %>
                     <span class="text-muted" style="font-size:11px;">—</span>

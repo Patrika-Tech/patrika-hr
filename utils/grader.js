@@ -1,4 +1,5 @@
 const { gradeWithAI } = require('./groqGrader');
+const { analyseCandidate, reportToGrade } = require('./talentAnalyst');
 
 const STOPWORDS = new Set([
   'a','an','the','and','or','but','in','on','at','to','for','of','with','by',
@@ -54,8 +55,24 @@ exports.computeGrade = function(candidate, jdHtml) {
   return { grade: r.grade, score: r.score, matchedKeywords: r.matchedKeywords };
 };
 
-// Async: tries Groq AI first, falls back to keyword
+// Async: Talent Analyst evaluation first (5-dimension weighted rubric),
+// then simple AI grader, then keyword fallback
 exports.computeGradeAsync = async function(candidate, jdHtml, positionName) {
+  // 1) Full Talent Analyst report (same parameters as the Talent Analyst tab)
+  const report = await analyseCandidate(candidate, jdHtml, positionName || candidate.positionApplying || '');
+  if (report && report.tier) {
+    const g = reportToGrade(report);
+    return {
+      grade:           g.grade,
+      score:           g.score,
+      gradeReason:     g.gradeReason,
+      gradeSource:     g.gradeSource,
+      analystReport:   JSON.stringify(report),
+      matchedKeywords: []
+    };
+  }
+
+  // 2) Simple AI grader
   const aiResult = await gradeWithAI(candidate, jdHtml, positionName || candidate.positionApplying || '');
   if (aiResult) {
     return {
@@ -63,16 +80,19 @@ exports.computeGradeAsync = async function(candidate, jdHtml, positionName) {
       score:           aiResult.score,
       gradeReason:     aiResult.reason,
       gradeSource:     'ai',
+      analystReport:   null,
       matchedKeywords: []
     };
   }
-  // Fallback
+
+  // 3) Keyword fallback
   const kw = keywordGrade(candidate, jdHtml);
   return {
     grade:           kw.grade,
     score:           kw.score,
     gradeReason:     kw.reason,
     gradeSource:     'keyword',
+    analystReport:   null,
     matchedKeywords: kw.matchedKeywords
   };
 };
