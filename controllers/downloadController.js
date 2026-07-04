@@ -3,7 +3,9 @@
 const JSZip = require('jszip');
 const path  = require('path');
 const fs    = require('fs');
+const { Op }  = require('sequelize');
 const { Candidate, InterviewSheet, CandidateDetailForm, Communication, ActivityLog } = require('../models');
+const { resolveResumePath } = require('../utils/resumePath');
 
 // ─── Formatting helpers ───────────────────────────────────────────────────────
 
@@ -392,13 +394,14 @@ async function downloadSingle(req, res) {
 
     // Resume
     if (docs.includes('resume')) {
-      if (candidate.resumePath && fs.existsSync(candidate.resumePath)) {
-        const fileBuffer = fs.readFileSync(candidate.resumePath);
-        const ext = path.extname(candidate.resumeOriginalName || candidate.resumePath);
+      const resumeFile = resolveResumePath(candidate);
+      if (resumeFile) {
+        const fileBuffer = fs.readFileSync(resumeFile);
+        const ext = path.extname(candidate.resumeOriginalName || resumeFile);
         const safeOriginal = (candidate.resumeOriginalName || `resume${ext}`).replace(/[^a-zA-Z0-9._-]/g, '_');
         folder.file(safeOriginal, fileBuffer);
       } else {
-        folder.file('Resume_not_uploaded.txt', 'Resume has not been uploaded for this candidate.');
+        folder.file('Resume_not_available.txt', 'Resume file is not available on this server.');
       }
     }
 
@@ -476,13 +479,14 @@ async function downloadBulk(req, res) {
 
       // Resume
       if (docs.includes('resume')) {
-        if (candidate.resumePath && fs.existsSync(candidate.resumePath)) {
-          const fileBuffer = fs.readFileSync(candidate.resumePath);
-          const ext = path.extname(candidate.resumeOriginalName || candidate.resumePath);
+        const resumeFile = resolveResumePath(candidate);
+        if (resumeFile) {
+          const fileBuffer = fs.readFileSync(resumeFile);
+          const ext = path.extname(candidate.resumeOriginalName || resumeFile);
           const safeOriginal = (candidate.resumeOriginalName || `resume${ext}`).replace(/[^a-zA-Z0-9._-]/g, '_');
           folder.file(safeOriginal, fileBuffer);
         } else {
-          folder.file('Resume_not_uploaded.txt', 'Resume has not been uploaded for this candidate.');
+          folder.file('Resume_not_available.txt', 'Resume file is not available on this server.');
         }
       }
 
@@ -530,4 +534,62 @@ async function downloadBulk(req, res) {
   }
 }
 
-module.exports = { downloadSingle, downloadBulk };
+// ─── Resumes Grouped by Position ──────────────────────────────────────────────
+
+async function downloadResumesByPosition(req, res) {
+  try {
+    // ?positions=all  or  ?positions=Reporter,Sub Editor
+    const positionsParam = (req.query.positions || 'all').trim();
+
+    const where = {};
+    if (positionsParam && positionsParam.toLowerCase() !== 'all') {
+      const list = positionsParam.split(',').map(p => p.trim()).filter(Boolean);
+      if (!list.length) return res.status(400).send('No positions selected.');
+      where.positionApplying = { [Op.in]: list };
+    }
+
+    const candidates = await Candidate.findAll({
+      where,
+      attributes: ['id','fullName','positionApplying','resumePath','resumeStoredName','resumeOriginalName'],
+      order: [['positionApplying','ASC'], ['fullName','ASC']]
+    });
+    if (!candidates.length) return res.status(404).send('No candidates found for the selected position(s).');
+
+    const zip = new JSZip();
+    let added = 0;
+    const unavailable = [];
+
+    for (const c of candidates) {
+      const posFolder = (c.positionApplying || 'Unspecified').replace(/[^a-zA-Z0-9 _-]/g, '').trim().replace(/\s+/g, '_') || 'Unspecified';
+      const resumeFile = resolveResumePath(c);
+      if (!resumeFile) {
+        unavailable.push(`${c.fullName} (ID ${c.id}) — ${c.positionApplying || 'Unspecified'}`);
+        continue;
+      }
+      const ext = path.extname(c.resumeOriginalName || resumeFile) || '.pdf';
+      const fileName = `${c.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_${c.id}${ext}`;
+      zip.folder(posFolder).file(fileName, fs.readFileSync(resumeFile));
+      added++;
+    }
+
+    if (!added) return res.status(404).send('No resume files are available on this server for the selected position(s).');
+
+    // List any resumes that could not be included, so nothing goes silently missing
+    if (unavailable.length) {
+      zip.file('_MISSING_RESUMES.txt',
+        `${unavailable.length} resume file(s) were not available on this server:\r\n\r\n` +
+        unavailable.join('\r\n'));
+    }
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="Resumes_By_Position_${dateStr}.zip"`);
+    res.send(buffer);
+  } catch (err) {
+    console.error('[downloadResumesByPosition] Error:', err);
+    res.status(500).send('Failed to generate resumes bundle: ' + err.message);
+  }
+}
+
+module.exports = { downloadSingle, downloadBulk, downloadResumesByPosition };

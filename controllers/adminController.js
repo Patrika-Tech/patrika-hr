@@ -8,6 +8,7 @@ const { computeGrade, computeGradeAsync } = require('../utils/grader');
 const path = require('path');
 const fs   = require('fs');
 const bcrypt = require('bcryptjs');
+const { resolveResumePath } = require('../utils/resumePath');
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
@@ -306,14 +307,90 @@ exports.sendCommunication = async (req, res) => {
   }
 };
 
+// ─── BULK MESSAGE (common message to many candidates, e.g. all Shortlisted) ──
+
+exports.bulkMessage = async (req, res) => {
+  try {
+    let { candidateIds, status, channel, subject, message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Message is required' });
+    }
+    if (!['Email', 'WhatsApp'].includes(channel)) {
+      return res.status(400).json({ success: false, message: 'Invalid channel' });
+    }
+
+    // Target: explicit candidate IDs, or all candidates with a given status
+    let candidates = [];
+    if (Array.isArray(candidateIds) && candidateIds.length) {
+      candidates = await Candidate.findAll({ where: { id: candidateIds } });
+    } else if (status) {
+      candidates = await Candidate.findAll({ where: { status } });
+    }
+    if (!candidates.length) {
+      return res.status(404).json({ success: false, message: 'No candidates found for the selected target' });
+    }
+
+    const sender = req.session.adminName || 'Admin';
+    let sent = 0, failed = 0;
+    const failures = [];
+
+    for (const c of candidates) {
+      // Personalise placeholders
+      const msg  = message.replace(/{{\s*name\s*}}/gi, c.fullName).replace(/{{\s*position\s*}}/gi, c.positionApplying || '');
+      const subj = (subject || 'Message from Patrika HR').replace(/{{\s*name\s*}}/gi, c.fullName).replace(/{{\s*position\s*}}/gi, c.positionApplying || '');
+
+      try {
+        if (channel === 'Email') {
+          if (!c.email) throw new Error('No email address');
+          await sendEmail({
+            to: c.email,
+            subject: subj,
+            html: `<p>${msg.replace(/\n/g, '<br>')}</p><br><p>Regards,<br>Patrika HR Team</p>`
+          });
+        } else {
+          if (!c.contactNumber) throw new Error('No contact number');
+          await sendWhatsApp(c.contactNumber, msg);
+        }
+
+        await Communication.create({
+          candidateId: c.id, channel, subject: subj, message: msg,
+          sentBy: sender, status: 'Sent'
+        }).catch(() => {});
+        await ActivityLog.create({
+          candidateId: c.id,
+          activityType: channel === 'Email' ? 'email_sent' : 'whatsapp_sent',
+          title: `Bulk: ${subj}`,
+          details: msg.substring(0, 300),
+          performedBy: sender,
+          createdAt: new Date()
+        }).catch(() => {});
+        sent++;
+      } catch (err) {
+        failed++;
+        failures.push(`${c.fullName}: ${err.message}`);
+        await Communication.create({
+          candidateId: c.id, channel, subject: subj, message: msg,
+          sentBy: sender, status: 'Failed'
+        }).catch(() => {});
+      }
+    }
+
+    res.json({ success: true, sent, failed, total: candidates.length, failures: failures.slice(0, 10) });
+  } catch (err) {
+    console.error('bulkMessage error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // ─── DOWNLOAD RESUME ──────────────────────────────────────────────────────────
 
 exports.downloadResume = async (req, res) => {
   try {
     const candidate = await Candidate.findByPk(req.params.id);
     if (!candidate || !candidate.resumeOriginalName) return res.status(404).send('No resume found');
-    const filePath = path.resolve(candidate.resumePath);
-    if (!fs.existsSync(filePath)) return res.status(404).send('File not found on server');
+    const filePath = resolveResumePath(candidate);
+    if (!filePath) return res.status(404).send('File not found on server');
     res.download(filePath, candidate.resumeOriginalName);
   } catch (err) {
     res.status(500).send('Error downloading file');
@@ -328,8 +405,8 @@ exports.previewResume = async (req, res) => {
     if (!candidate || !candidate.resumeOriginalName) {
       return res.status(404).send('<h3>No resume found for this candidate.</h3>');
     }
-    const filePath = path.resolve(candidate.resumePath);
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveResumePath(candidate);
+    if (!filePath) {
       return res.status(404).send('<h3>Resume file not found on server.</h3>');
     }
 

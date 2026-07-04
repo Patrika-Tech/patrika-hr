@@ -85,6 +85,12 @@
           <button class="btn btn-sm btn-outline-secondary" id="gradeAllBtn" title="Re-grade all candidates based on JD match">
             <i class="bi bi-stars me-1"></i>Re-grade All
           </button>
+          <button class="btn btn-sm btn-outline-primary" onclick="openResumesByPosition()" title="Download all resumes organized into folders by position">
+            <i class="bi bi-folder-symlink me-1"></i>Resumes by Position
+          </button>
+          <button class="btn btn-sm btn-outline-info" onclick="openBulkMessage()" title="Send a common message to shortlisted / selected candidates">
+            <i class="bi bi-send me-1"></i>Bulk Message
+          </button>
           <button class="btn btn-sm btn-warning d-none" id="downloadSelectedBtn" onclick="openBulkDownload()" disabled>
             <i class="bi bi-download me-1"></i>Download Selected
           </button>
@@ -179,6 +185,9 @@
           <span><strong id="selectedCount">0</strong> selected</span>
           <button onclick="openBulkDownload()" class="btn btn-sm btn-warning">
             <i class="bi bi-download me-1"></i>Download Documents
+          </button>
+          <button onclick="openBulkMessage(true)" class="btn btn-sm btn-info">
+            <i class="bi bi-send me-1"></i>Message Selected
           </button>
           <button onclick="clearSelection()" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-x me-1"></i>Clear
@@ -379,6 +388,97 @@
     </div>
   </div>
 
+  <!-- Resumes by Position Modal -->
+  <div class="modal fade" id="resumesByPositionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-folder-symlink me-2 text-primary"></i>Download Resumes by Position
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">
+            Resumes will be organized into one folder per position inside the ZIP file.
+          </p>
+          <div class="form-check mb-2 border-bottom pb-2">
+            <input class="form-check-input" type="checkbox" id="rbpAll" checked onchange="toggleAllPositions(this)">
+            <label class="form-check-label fw-semibold" for="rbpAll">All Positions</label>
+          </div>
+          <div style="max-height:260px;overflow-y:auto;">
+            <% allPositions.forEach((p, i) => { %>
+            <div class="form-check">
+              <input class="form-check-input rbp-check" type="checkbox" id="rbp<%= i %>" value="<%= p.name %>" checked>
+              <label class="form-check-label" for="rbp<%= i %>"><%= p.name %></label>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="downloadResumesByPosition()">
+            <i class="bi bi-download me-1"></i>Download ZIP
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Message Modal -->
+  <div class="modal fade" id="bulkMessageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-send me-2 text-info"></i>Send Common Message
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Send To</label>
+              <select class="form-select form-select-sm" id="bmTarget">
+                <option value="Shortlisted">All Shortlisted candidates</option>
+                <option value="Interview Scheduled">All Interview Scheduled candidates</option>
+                <option value="Offer Extended">All Offer Extended candidates</option>
+                <option value="__selected__">Selected candidates only</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Channel</label>
+              <select class="form-select form-select-sm" id="bmChannel">
+                <option value="Email">Email</option>
+                <option value="WhatsApp">WhatsApp</option>
+              </select>
+            </div>
+            <div class="col-12" id="bmSubjectWrap">
+              <label class="form-label small fw-semibold">Subject</label>
+              <input type="text" class="form-control form-control-sm" id="bmSubject"
+                     placeholder="e.g. Congratulations — you are shortlisted for {{position}}">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Message</label>
+              <textarea class="form-control form-control-sm" id="bmMessage" rows="6"
+                placeholder="Dear {{name}},&#10;&#10;Congratulations! You have been shortlisted for the position of {{position}}..."></textarea>
+              <div class="form-text">
+                Placeholders: <code>{{name}}</code> = candidate name, <code>{{position}}</code> = position applied for.
+              </div>
+            </div>
+          </div>
+          <div id="bmResult" class="alert d-none mt-3 mb-0 py-2 small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-info btn-sm" id="bmSendBtn" onclick="sendBulkMessage()">
+            <i class="bi bi-send me-1"></i>Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Init Bootstrap tooltips
@@ -489,6 +589,89 @@
       document.body.removeChild(form);
       const modal = bootstrap.Modal.getInstance(document.getElementById('bulkDownloadModal'));
       if (modal) modal.hide();
+    }
+
+    // ── Resumes by Position ──────────────────────────────────────────────────
+
+    function openResumesByPosition() {
+      new bootstrap.Modal(document.getElementById('resumesByPositionModal')).show();
+    }
+
+    function toggleAllPositions(master) {
+      document.querySelectorAll('.rbp-check').forEach(cb => cb.checked = master.checked);
+    }
+
+    function downloadResumesByPosition() {
+      const all = document.getElementById('rbpAll').checked;
+      const checked = [...document.querySelectorAll('.rbp-check:checked')].map(cb => cb.value);
+      if (!all && !checked.length) { alert('Select at least one position.'); return; }
+      const totalBoxes = document.querySelectorAll('.rbp-check').length;
+      const positions = (all || checked.length === totalBoxes) ? 'all' : checked.join(',');
+      window.location = '/admin/resumes/by-position?positions=' + encodeURIComponent(positions);
+      const modal = bootstrap.Modal.getInstance(document.getElementById('resumesByPositionModal'));
+      if (modal) modal.hide();
+    }
+
+    // ── Bulk Message ─────────────────────────────────────────────────────────
+
+    function openBulkMessage(useSelected) {
+      const target = document.getElementById('bmTarget');
+      if (useSelected) target.value = '__selected__';
+      document.getElementById('bmResult').classList.add('d-none');
+      new bootstrap.Modal(document.getElementById('bulkMessageModal')).show();
+    }
+
+    document.getElementById('bmChannel').addEventListener('change', function() {
+      document.getElementById('bmSubjectWrap').style.display = this.value === 'Email' ? '' : 'none';
+    });
+
+    async function sendBulkMessage() {
+      const target  = document.getElementById('bmTarget').value;
+      const channel = document.getElementById('bmChannel').value;
+      const subject = document.getElementById('bmSubject').value.trim();
+      const message = document.getElementById('bmMessage').value.trim();
+      const resultEl = document.getElementById('bmResult');
+      const btn = document.getElementById('bmSendBtn');
+
+      if (!message) { alert('Message is required.'); return; }
+
+      const payload = { channel, subject, message };
+      if (target === '__selected__') {
+        const ids = [...document.querySelectorAll('.candidate-check:checked')].map(cb => cb.value);
+        if (!ids.length) { alert('No candidates selected. Tick candidates in the table first.'); return; }
+        payload.candidateIds = ids;
+      } else {
+        payload.status = target;
+      }
+
+      const targetLabel = target === '__selected__' ? 'selected candidates' : `all "${target}" candidates`;
+      if (!confirm(`Send this ${channel} to ${targetLabel}?`)) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+      try {
+        const r = await fetch('/admin/candidates/bulk-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await r.json();
+        resultEl.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
+        if (d.success) {
+          resultEl.classList.add(d.failed ? 'alert-warning' : 'alert-success');
+          resultEl.innerHTML = `<i class="bi bi-check-circle me-1"></i>Sent: <strong>${d.sent}</strong> / ${d.total}` +
+            (d.failed ? ` &nbsp;·&nbsp; Failed: <strong>${d.failed}</strong><br><small>${(d.failures||[]).join('<br>')}</small>` : '');
+        } else {
+          resultEl.classList.add('alert-danger');
+          resultEl.textContent = d.message || 'Failed to send.';
+        }
+      } catch (e) {
+        resultEl.classList.remove('d-none');
+        resultEl.classList.add('alert-danger');
+        resultEl.textContent = 'Network error: ' + e.message;
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send me-1"></i>Send';
     }
   </script>
 </body>

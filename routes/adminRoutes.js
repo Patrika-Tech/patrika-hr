@@ -69,6 +69,12 @@ router.get('/candidates/export', requireAdmin, adminController.exportCandidates)
 router.post('/candidates/bulk-download', requireAdmin, downloadController.downloadBulk);
 router.get('/candidate/:id/download-bundle', requireAdmin, downloadController.downloadSingle);
 
+// Resumes grouped into folders by position
+router.get('/resumes/by-position', requireAdmin, downloadController.downloadResumesByPosition);
+
+// Bulk message (common message to all shortlisted / selected candidates)
+router.post('/candidates/bulk-message', requireAdmin, adminController.bulkMessage);
+
 // Grading
 router.post('/candidates/grade-all', requireAdmin, adminController.gradeAll);
 router.post('/candidate/:id/grade',  requireAdmin, adminController.gradeOne);

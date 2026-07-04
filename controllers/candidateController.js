@@ -1,4 +1,5 @@
 const { Candidate, Position } = require('../models');
+const { Op } = require('sequelize');
 const { parseResume } = require('../utils/resumeParser');
 const { sendEmail, applicationReceivedTemplate } = require('../utils/emailService');
 const { qrExists, generateQR } = require('../utils/qrGenerator');
@@ -31,6 +32,29 @@ exports.submitForm = async (req, res) => {
       packageFixed, packageVariables, packageOthers,
       whyJoinUs, first90DaysPlan
     } = req.body;
+
+    // Block re-application for the same position within 2 months (by email or phone)
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    const existing = await Candidate.findOne({
+      where: {
+        positionApplying,
+        submittedAt: { [Op.gte]: twoMonthsAgo },
+        [Op.or]: [
+          { email: email.trim().toLowerCase() },
+          { contactNumber: contactNumber.trim() }
+        ]
+      },
+      order: [['submittedAt', 'DESC']]
+    });
+    if (existing) {
+      const nextDate = new Date(existing.submittedAt);
+      nextDate.setMonth(nextDate.getMonth() + 2);
+      const nextStr = nextDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+      return res.redirect(`/apply?error=${encodeURIComponent(
+        `You have already applied for "${positionApplying}" recently. You can apply again for this position after ${nextStr}.`
+      )}`);
+    }
 
     const candidateData = {
       fullName:        fullName.trim(),
