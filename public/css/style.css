@@ -58,26 +58,18 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 .header-logo { height: 48px; object-fit: contain; }
 
 .hero-banner {
-  background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 50%, #2d2060 100%);
-  position: relative;
-  overflow: hidden;
-}
-.hero-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a017' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background: #ffffff;
+  border-bottom: 1px solid #e8e2d8;
 }
 .hero-title {
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
   font-weight: 800;
-  color: var(--gold);
-  position: relative;
+  color: #111111;
+  line-height: 1.25;
 }
 .hero-sub {
-  color: rgba(255,255,255,0.75);
+  color: #555;
   font-size: 1.05rem;
-  position: relative;
   max-width: 600px;
   margin: 0 auto;
 }
