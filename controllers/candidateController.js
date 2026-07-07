@@ -13,13 +13,21 @@ exports.showForm = async (req, res) => {
   }
   const positions = await Position.findAll({
     where: { isActive: true },
-    order: [['sortOrder','ASC'],['name','ASC']]
+    order: [['department','ASC'],['sortOrder','ASC'],['name','ASC']]
+  });
+  // Group by department for the apply form
+  const positionsByDept = {};
+  positions.forEach(p => {
+    const dept = p.department || 'General';
+    if (!positionsByDept[dept]) positionsByDept[dept] = [];
+    positionsByDept[dept].push(p);
   });
   res.render('form', {
     title: 'Apply Now – Patrika HR',
     success: req.query.success,
     error: req.query.error,
-    positions
+    positions,
+    positionsByDept
   });
 };
 

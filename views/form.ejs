@@ -156,16 +156,24 @@
                 <label class="form-label fw-semibold">
                   <i class="bi bi-briefcase me-1 text-gold"></i>Position Applying For *
                 </label>
-                <div class="row g-2">
-                  <% positions.forEach(pos => { %>
-                  <div class="col-md-6 col-lg-4">
-                    <input type="radio" class="btn-check" name="positionApplying" id="pos_<%= pos.name.replace(/\s/g,'_') %>" value="<%= pos.name %>" required>
-                    <label class="btn btn-outline-gold w-100 text-start px-3" for="pos_<%= pos.name.replace(/\s/g,'_') %>">
-                      <i class="bi bi-check-circle me-1"></i><%= pos.name %>
-                    </label>
+                <% Object.entries(positionsByDept).forEach(([dept, deptPositions]) => { %>
+                <div class="mb-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-gold text-dark me-2 px-2 py-1" style="font-size:11px;letter-spacing:.5px;"><%= dept %></span>
+                    <hr class="flex-grow-1 my-0 border-gold opacity-25">
                   </div>
-                  <% }) %>
+                  <div class="row g-2">
+                    <% deptPositions.forEach(pos => { %>
+                    <div class="col-md-6 col-lg-4">
+                      <input type="radio" class="btn-check" name="positionApplying" id="pos_<%= pos.name.replace(/\s/g,'_') %>" value="<%= pos.name %>" required>
+                      <label class="btn btn-outline-gold w-100 text-start px-3" for="pos_<%= pos.name.replace(/\s/g,'_') %>">
+                        <i class="bi bi-check-circle me-1"></i><%= pos.name %>
+                      </label>
+                    </div>
+                    <% }) %>
+                  </div>
                 </div>
+                <% }) %>
                 <div class="form-text text-danger d-none" id="positionError">Please select a position.</div>
               </div>
 
@@ -299,18 +307,20 @@
             <h6 class="mb-0 text-dark"><i class="bi bi-list-check me-2"></i>Open Positions</h6>
           </div>
           <div class="card-body p-0">
-            <ul class="list-group list-group-flush">
-              <% positions.forEach(p => { %>
-              <li class="list-group-item d-flex align-items-center py-2">
-                <i class="bi bi-<%= p.icon %> me-2 text-gold fs-5"></i>
-                <div>
-                  <div class="fw-semibold small"><%= p.name %></div>
-                  <div class="text-muted" style="font-size:11px;"><%= p.department %></div>
-                </div>
+            <% Object.entries(positionsByDept).forEach(([dept, deptPositions]) => { %>
+            <div class="px-3 pt-2 pb-1">
+              <span class="badge bg-gold text-dark" style="font-size:10px;letter-spacing:.4px;"><%= dept %></span>
+            </div>
+            <ul class="list-group list-group-flush mb-1">
+              <% deptPositions.forEach(p => { %>
+              <li class="list-group-item d-flex align-items-center py-2 ps-3">
+                <i class="bi bi-<%= p.icon %> me-2 text-gold"></i>
+                <div class="fw-semibold small"><%= p.name %></div>
                 <i class="bi bi-arrow-right-circle ms-auto text-muted"></i>
               </li>
               <% }) %>
             </ul>
+            <% }) %>
           </div>
         </div>
 
