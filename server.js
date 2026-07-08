@@ -90,7 +90,15 @@ async function seedDepartments() {
   }
 }
 
+async function migratePositionColumn() {
+  const { sequelize } = require('./config/db');
+  await sequelize.query(
+    "ALTER TABLE candidates MODIFY COLUMN positionApplying VARCHAR(255) NULL"
+  );
+}
+
 connectDB().then(async () => {
+  await migratePositionColumn().catch(e => console.warn('Migration warning:', e.message));
   await seedDepartments().catch(e => console.warn('Dept seed warning:', e.message));
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`\n========================================`);
