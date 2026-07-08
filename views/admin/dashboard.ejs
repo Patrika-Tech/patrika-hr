@@ -261,7 +261,13 @@
                           </div>
                         </div>
                       </td>
-                      <td><span class="badge bg-dark" style="font-size:.72rem;"><%= c.positionApplying %></span></td>
+                      <td>
+                        <% if (c.positionApplying) { %>
+                        <span class="badge bg-dark" style="font-size:.72rem;"><%= c.positionApplying %></span>
+                        <% } else { %>
+                        <span class="text-muted" style="font-size:11px;">—</span>
+                        <% } %>
+                      </td>
                       <td class="text-center">
                         <% if (c.grade) { %>
                         <span class="badge bg-<%= gc[c.grade]||'secondary' %> px-2"><%= c.grade %></span>
