@@ -381,12 +381,14 @@ exports.bulkMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid channel' });
     }
 
-    // Target: explicit candidate IDs, or all candidates with a given status
+    // Target: explicit candidate IDs, or all candidates with a given status.
+    // Department users are limited to candidates in their own departments.
+    const bulkDeptScope = require('../utils/deptScope').deptWhere(req);
     let candidates = [];
     if (Array.isArray(candidateIds) && candidateIds.length) {
-      candidates = await Candidate.findAll({ where: { id: candidateIds } });
+      candidates = await Candidate.findAll({ where: { id: candidateIds, ...(bulkDeptScope || {}) } });
     } else if (status) {
-      candidates = await Candidate.findAll({ where: { status } });
+      candidates = await Candidate.findAll({ where: { status, ...(bulkDeptScope || {}) } });
     }
     if (!candidates.length) {
       return res.status(404).json({ success: false, message: 'No candidates found for the selected target' });
@@ -629,6 +631,8 @@ exports.exportCandidates = async (req, res) => {
   try {
     const { search, status, position } = req.query;
     const where = {};
+    const deptScope = require('../utils/deptScope').deptWhere(req);
+    if (deptScope) Object.assign(where, deptScope);
     if (search) {
       where[Op.or] = [
         { fullName:      { [Op.like]: `%${search}%` } },
@@ -697,8 +701,9 @@ exports.exportCandidates = async (req, res) => {
 
 exports.gradeAll = async (req, res) => {
   try {
+    const gradeDeptScope = require('../utils/deptScope').deptWhere(req);
     const [candidates, positions] = await Promise.all([
-      Candidate.findAll(),
+      Candidate.findAll({ where: gradeDeptScope || {} }),
       Position.findAll()
     ]);
     const posMap = {};

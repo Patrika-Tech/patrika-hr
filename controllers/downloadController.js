@@ -464,6 +464,14 @@ async function downloadBulk(req, res) {
     if (!candidateIds.length) return res.status(400).send('No candidates selected.');
     if (!docs.length)         return res.status(400).send('No document types selected.');
 
+    // Department users may only download candidates from their own departments
+    const deptScope = require('../utils/deptScope').deptWhere(req);
+    if (deptScope) {
+      const allowed = await Candidate.findAll({ where: { id: candidateIds, ...deptScope }, attributes: ['id'] });
+      candidateIds = allowed.map(c => c.id);
+      if (!candidateIds.length) return res.status(403).send('None of the selected candidates belong to your department.');
+    }
+
     const zip = new JSZip();
     const dateStr = new Date().toISOString().split('T')[0];
 
@@ -547,6 +555,10 @@ async function downloadResumesByPosition(req, res) {
       if (!list.length) return res.status(400).send('No positions selected.');
       where.positionApplying = { [Op.in]: list };
     }
+
+    // Department users may only download resumes for their own departments
+    const deptScope = require('../utils/deptScope').deptWhere(req);
+    if (deptScope) where[Op.and] = [deptScope];
 
     const candidates = await Candidate.findAll({
       where,

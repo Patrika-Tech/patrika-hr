@@ -9,7 +9,9 @@ const adminRoutes        = require('./routes/adminRoutes');
 const detailFormRoutes   = require('./routes/detailFormRoutes');
 const requisitionRoutes  = require('./routes/requisitionRoutes');
 const testRoutes         = require('./routes/testRoutes');
-const { generateQR }   = require('./utils/qrGenerator');
+const testController     = require('./controllers/testController');
+const { requireAdmin, requireCandidateAccess } = require('./middleware/auth');
+const { generateQR }     = require('./utils/qrGenerator');
 
 const app = express();
 
@@ -64,6 +66,12 @@ app.use('/', candidateRoutes);
 app.use('/', detailFormRoutes);
 app.use('/', requisitionRoutes);
 app.use('/', testRoutes);
+
+// Assessment test routes — registered directly to avoid router mounting ambiguity
+app.post('/admin/candidate/:id/send-test', requireAdmin, requireCandidateAccess, testController.sendTest);
+app.get('/admin/candidate/:id/tests',      requireAdmin, requireCandidateAccess, testController.listTests);
+app.get('/admin/test-result/:testId',      requireAdmin, testController.viewResult);
+
 app.use('/admin', adminRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
@@ -104,6 +112,16 @@ async function migrateDepartmentColumn() {
   await sequelize.query("ALTER TABLE admins MODIFY COLUMN department TEXT NULL");
 }
 
+async function migrateActivityLogEnum() {
+  const { sequelize } = require('./config/db');
+  await sequelize.query(`
+    ALTER TABLE candidate_activity_logs MODIFY COLUMN activityType
+    ENUM('application_received','status_changed','note_saved','email_sent',
+         'whatsapp_sent','interview_updated','detail_form_submitted',
+         'test_sent','test_submitted') NOT NULL
+  `);
+}
+
 async function migrateCandidateTests() {
   const { sequelize } = require('./config/db');
   await sequelize.query(`
@@ -129,6 +147,7 @@ connectDB().then(async () => {
   await migratePositionColumn().catch(e => console.warn('Migration warning:', e.message));
   await migrateDepartmentColumn().catch(e => console.warn('Dept column migration warning:', e.message));
   await migrateCandidateTests().catch(e => console.warn('Candidate tests table warning:', e.message));
+  await migrateActivityLogEnum().catch(e => console.warn('Activity log enum warning:', e.message));
   await seedDepartments().catch(e => console.warn('Dept seed warning:', e.message));
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`\n========================================`);

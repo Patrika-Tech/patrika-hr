@@ -12,7 +12,9 @@ const ActivityLog = sequelize.define('ActivityLog', {
       'email_sent',
       'whatsapp_sent',
       'interview_updated',
-      'detail_form_submitted'
+      'detail_form_submitted',
+      'test_sent',
+      'test_submitted'
     ),
     allowNull: false
   },

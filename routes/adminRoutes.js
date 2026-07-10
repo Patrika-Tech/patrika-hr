@@ -8,8 +8,9 @@ const talentAnalystController = require('../controllers/talentAnalystController'
 const interviewController     = require('../controllers/interviewController');
 const timelineController      = require('../controllers/timelineController');
 const downloadController      = require('../controllers/downloadController');
-const { requireAdmin, requireSuperAdmin, redirectIfLoggedIn } = require('../middleware/auth');
-const userController = require('../controllers/userController');
+const { requireAdmin, requireSuperAdmin, requireCandidateAccess, redirectIfLoggedIn } = require('../middleware/auth');
+const userController  = require('../controllers/userController');
+const testController  = require('../controllers/testController');
 
 const path = require('path');
 
@@ -48,12 +49,12 @@ router.get('/candidates', requireAdmin, adminController.candidatesList);
 router.get('/', requireAdmin, (req, res) => res.redirect('/admin/dashboard'));
 
 // Candidate CRUD
-router.get('/candidate/:id', requireAdmin, adminController.candidateDetail);
-router.post('/candidate/:id/update', requireAdmin, adminController.updateCandidate);
-router.post('/candidate/:id/communicate', requireAdmin, adminController.sendCommunication);
-router.get('/candidate/:id/download', requireAdmin, adminController.downloadResume);
-router.get('/candidate/:id/preview',  requireAdmin, adminController.previewResume);
-router.delete('/candidate/:id', requireAdmin, adminController.deleteCandidate);
+router.get('/candidate/:id', requireAdmin, requireCandidateAccess, adminController.candidateDetail);
+router.post('/candidate/:id/update', requireAdmin, requireCandidateAccess, adminController.updateCandidate);
+router.post('/candidate/:id/communicate', requireAdmin, requireCandidateAccess, adminController.sendCommunication);
+router.get('/candidate/:id/download', requireAdmin, requireCandidateAccess, adminController.downloadResume);
+router.get('/candidate/:id/preview',  requireAdmin, requireCandidateAccess, adminController.previewResume);
+router.delete('/candidate/:id', requireAdmin, requireCandidateAccess, adminController.deleteCandidate);
 
 // Offline Resume Parser
 router.get('/resume-parser',        requireAdmin, adminController.showResumeParser);
@@ -68,7 +69,7 @@ router.get('/candidates/export', requireAdmin, adminController.exportCandidates)
 
 // Document Bundle Download (bulk must be before /:id param routes)
 router.post('/candidates/bulk-download', requireAdmin, downloadController.downloadBulk);
-router.get('/candidate/:id/download-bundle', requireAdmin, downloadController.downloadSingle);
+router.get('/candidate/:id/download-bundle', requireAdmin, requireCandidateAccess, downloadController.downloadSingle);
 
 // Resumes grouped into folders by position
 router.get('/resumes/by-position', requireAdmin, downloadController.downloadResumesByPosition);
@@ -78,20 +79,20 @@ router.post('/candidates/bulk-message', requireAdmin, adminController.bulkMessag
 
 // Grading
 router.post('/candidates/grade-all', requireAdmin, adminController.gradeAll);
-router.post('/candidate/:id/grade',  requireAdmin, adminController.gradeOne);
+router.post('/candidate/:id/grade',  requireAdmin, requireCandidateAccess, adminController.gradeOne);
 
 // Personal Detail Form
-router.post('/candidate/:id/send-detail-form', requireAdmin, detailFormController.sendDetailForm);
-router.get('/candidate/:id/detail-form',       requireAdmin, detailFormController.viewDetailForm);
+router.post('/candidate/:id/send-detail-form', requireAdmin, requireCandidateAccess, detailFormController.sendDetailForm);
+router.get('/candidate/:id/detail-form',       requireAdmin, requireCandidateAccess, detailFormController.viewDetailForm);
 
 // Interview Sheet
-router.get('/candidate/:id/interview',  requireAdmin, interviewController.showSheet);
-router.post('/candidate/:id/interview', requireAdmin, interviewController.saveSheet);
-router.get('/candidate/:id/interview/print', requireAdmin, interviewController.printSheet);
+router.get('/candidate/:id/interview',  requireAdmin, requireCandidateAccess, interviewController.showSheet);
+router.post('/candidate/:id/interview', requireAdmin, requireCandidateAccess, interviewController.saveSheet);
+router.get('/candidate/:id/interview/print', requireAdmin, requireCandidateAccess, interviewController.printSheet);
 
 // Activity Timeline
-router.get('/candidate/:id/timeline',        requireAdmin, timelineController.showTimeline);
-router.post('/candidate/:id/timeline/email', requireAdmin, timelineController.emailTimeline);
+router.get('/candidate/:id/timeline',        requireAdmin, requireCandidateAccess, timelineController.showTimeline);
+router.post('/candidate/:id/timeline/email', requireAdmin, requireCandidateAccess, timelineController.emailTimeline);
 
 // Positions Management (super-admin only)
 router.get('/positions',              requireSuperAdmin, adminController.listPositions);
@@ -119,5 +120,10 @@ router.post('/requisitions/send-form',   requireAdmin, requisitionController.sen
 router.get('/requisitions',              requireAdmin, requisitionController.listRequisitions);
 router.get('/requisitions/:id',          requireAdmin, requisitionController.requisitionDetail);
 router.post('/requisitions/:id/status',  requireAdmin, requisitionController.updateStatus);
+
+// Assessment Tests
+router.post('/candidate/:id/send-test', requireAdmin, requireCandidateAccess, testController.sendTest);
+router.get('/candidate/:id/tests',      requireAdmin, requireCandidateAccess, testController.listTests);
+router.get('/test-result/:testId',      requireAdmin, testController.viewResult);
 
 module.exports = router;

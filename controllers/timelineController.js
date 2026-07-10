@@ -81,6 +81,18 @@ function buildEvents(candidate, communications, activityLogs, interviewSheet) {
         colorClass = 'info';
         body = log.details || 'Detail form submitted';
         break;
+      case 'test_sent':
+        icon = 'bi-clipboard2-pulse-fill';
+        color = '#d4af37';
+        colorClass = 'gold';
+        body = log.details || 'Assessment test sent';
+        break;
+      case 'test_submitted':
+        icon = 'bi-clipboard2-check-fill';
+        color = '#198754';
+        colorClass = 'success';
+        body = log.details || 'Assessment test submitted';
+        break;
       default:
         body = log.details || '';
     }

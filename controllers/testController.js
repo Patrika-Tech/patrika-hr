@@ -1,16 +1,16 @@
 'use strict';
 const axios   = require('axios');
 const crypto  = require('crypto');
-const { CandidateTest, Candidate } = require('../models');
+const { CandidateTest, Candidate, ActivityLog } = require('../models');
 const { sendEmail } = require('../utils/emailService');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 // ─── Generate test via Groq ────────────────────────────────────────────────────
 async function generateTest(positionName) {
-  const prompt = `You are an expert HR psychometric test designer for a media company.
+  const prompt = `You are an expert HR psychometric test designer for an Indian media company. You write all content in English.
 
-Generate a unique Psychometric & Behavioral Assessment for the position: "${positionName}".
+Generate a unique Psychometric & Behavioral Assessment IN ENGLISH for the position: "${positionName}".
 
 Return ONLY valid JSON matching this exact structure (no markdown, no explanation):
 {
@@ -108,6 +108,7 @@ Return ONLY valid JSON matching this exact structure (no markdown, no explanatio
 }
 
 Rules:
+- ALL content MUST be written in ENGLISH ONLY — every question, option, and statement. Never use Chinese, Hindi, or any other language.
 - Section A must have exactly 6 questions, correct answer is always "B"
 - Section B must have exactly 4 questions, correct answer is always "A"
 - Section C must have exactly 4 questions, correct answer is always "A"
@@ -215,6 +216,15 @@ exports.sendTest = async (req, res) => {
         </div>`
     }).catch(e => { console.warn('Email failed:', e.message); return false; });
 
+    await ActivityLog.create({
+      candidateId:  candidate.id,
+      activityType: 'test_sent',
+      title:        'Assessment test sent',
+      details:      `Psychometric & Behavioral Assessment for "${positionName}" sent to ${candidate.email}${emailSent ? '' : ' (email delivery failed)'}`,
+      performedBy:  req.session.adminName || 'Admin',
+      createdAt:    new Date()
+    }).catch(e => console.error('ActivityLog test_sent error:', e.message));
+
     res.json({ success: true, testId: test.id, token, emailSent: !!emailSent });
   } catch(err) {
     console.error('sendTest error:', err);
@@ -266,6 +276,16 @@ exports.submitTest = async (req, res) => {
       submittedAt: new Date()
     });
 
+    await ActivityLog.create({
+      candidateId:  test.candidateId,
+      activityType: 'test_submitted',
+      title:        'Assessment test submitted',
+      details:      `Candidate completed the "${test.positionName}" assessment — scored ${score}/${test.maxScore}`,
+      newValue:     `${score}/${test.maxScore}`,
+      performedBy:  'Candidate',
+      createdAt:    new Date()
+    }).catch(e => console.error('ActivityLog test_submitted error:', e.message));
+
     res.json({ success: true, score, maxScore: test.maxScore });
   } catch(err) {
     console.error('submitTest error:', err);
@@ -303,13 +323,16 @@ exports.viewResult = async (req, res) => {
 
 // ─── Admin: list all tests for a candidate ────────────────────────────────────
 exports.listTests = async (req, res) => {
+  console.log('[listTests] candidateId:', req.params.id, '| CandidateTest type:', typeof CandidateTest);
   try {
     const tests = await CandidateTest.findAll({
       where: { candidateId: req.params.id },
       order: [['sentAt', 'DESC']]
     });
+    console.log('[listTests] found:', tests.length);
     res.json({ success: true, tests });
   } catch(err) {
+    console.error('[listTests] DB error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
