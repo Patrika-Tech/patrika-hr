@@ -102,6 +102,9 @@
           <i class="bi bi-download me-1"></i>Download CV
         </a>
         <% } %>
+        <button class="btn btn-sm btn-outline-purple" onclick="sendTest()" id="sendTestBtn" style="border-color:#6f42c1;color:#6f42c1;">
+          <i class="bi bi-ui-checks me-1"></i>Send Test
+        </button>
         <a href="/admin/candidate/<%= candidate.id %>/interview" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-clipboard-check me-1"></i>Interview Sheet
         </a>
@@ -396,6 +399,19 @@
               </button>
               <% } %>
               <div id="formSendResult" class="mt-2"></div>
+            </div>
+          </div>
+
+          <!-- Test History Card -->
+          <div class="card shadow-sm mb-4" id="testHistoryCard">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-ui-checks me-2 text-gold"></i>Assessment Tests</h6>
+              <button class="btn btn-xs btn-sm btn-outline-gold py-0 px-2" onclick="sendTest()" id="sendTestBtn2">
+                <i class="bi bi-send me-1"></i>Send New Test
+              </button>
+            </div>
+            <div class="card-body p-0" id="testHistoryBody">
+              <div class="text-center text-muted py-3 small"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>
             </div>
           </div>
 
@@ -908,6 +924,53 @@ async function savePosition() {
   } catch(e) { alert('Network error'); }
   btn.disabled = false;
 }
+
+// ── Assessment Test ────────────────────────────────────────────────────────────
+async function sendTest() {
+  const btns = document.querySelectorAll('#sendTestBtn, #sendTestBtn2');
+  btns.forEach(b => { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...'; });
+  try {
+    const r = await fetch('/admin/candidate/<%= candidate.id %>/send-test', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const d = await r.json();
+    if (d.success) {
+      alert(d.emailSent ? 'Test generated and sent to candidate\'s email!' : 'Test generated! (Email delivery failed — check server email config)');
+      loadTestHistory();
+    } else {
+      alert(d.error || 'Failed to generate test');
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+  btns.forEach(b => { b.disabled = false; b.innerHTML = '<i class="bi bi-ui-checks me-1"></i>Send Test'; });
+}
+
+async function loadTestHistory() {
+  const body = document.getElementById('testHistoryBody');
+  try {
+    const r = await fetch('/admin/candidate/<%= candidate.id %>/tests');
+    const d = await r.json();
+    if (!d.tests || d.tests.length === 0) {
+      body.innerHTML = '<p class="text-muted text-center py-3 mb-0 small">No tests sent yet.</p>';
+      return;
+    }
+    const rows = d.tests.map((t, i) => {
+      const status = t.status === 'completed'
+        ? `<span class="badge bg-success">Completed</span>`
+        : `<span class="badge bg-warning text-dark">Pending</span>`;
+      const score = t.score !== null
+        ? `<strong class="text-gold">${t.score}/${t.maxScore}</strong> <span class="badge bg-${t.score >= 80 ? 'success' : t.score >= 50 ? 'warning text-dark' : 'danger'}">${t.score >= 80 ? 'A' : t.score >= 65 ? 'B' : t.score >= 50 ? 'C' : 'D'}</span>`
+        : '—';
+      const link = t.status === 'completed'
+        ? `<a href="/admin/test-result/${t.id}" class="btn btn-xs btn-sm btn-outline-gold py-0 px-2" target="_blank">View Result</a>`
+        : `<span class="text-muted small">Awaiting submission</span>`;
+      const date = new Date(t.sentAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      return `<tr><td class="ps-3 small text-muted">${date}</td><td class="small">${t.positionName}</td><td>${status}</td><td>${score}</td><td>${link}</td></tr>`;
+    }).join('');
+    body.innerHTML = `<table class="table table-hover mb-0 small"><thead class="table-light"><tr><th class="ps-3">Sent</th><th>Position</th><th>Status</th><th>Score</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
+  } catch(e) {
+    body.innerHTML = '<p class="text-danger small text-center py-3">Failed to load tests</p>';
+  }
+}
+
+loadTestHistory();
 </script>
 </body>
 </html>

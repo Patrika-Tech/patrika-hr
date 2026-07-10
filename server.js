@@ -8,6 +8,7 @@ const candidateRoutes    = require('./routes/candidateRoutes');
 const adminRoutes        = require('./routes/adminRoutes');
 const detailFormRoutes   = require('./routes/detailFormRoutes');
 const requisitionRoutes  = require('./routes/requisitionRoutes');
+const testRoutes         = require('./routes/testRoutes');
 const { generateQR }   = require('./utils/qrGenerator');
 
 const app = express();
@@ -62,6 +63,7 @@ app.use(session({
 app.use('/', candidateRoutes);
 app.use('/', detailFormRoutes);
 app.use('/', requisitionRoutes);
+app.use('/', testRoutes);
 app.use('/admin', adminRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
@@ -102,9 +104,31 @@ async function migrateDepartmentColumn() {
   await sequelize.query("ALTER TABLE admins MODIFY COLUMN department TEXT NULL");
 }
 
+async function migrateCandidateTests() {
+  const { sequelize } = require('./config/db');
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS candidate_tests (
+      id            INT AUTO_INCREMENT PRIMARY KEY,
+      candidateId   INT NOT NULL,
+      positionName  VARCHAR(255),
+      token         VARCHAR(64) UNIQUE NOT NULL,
+      questions     LONGTEXT,
+      answers       TEXT,
+      score         INT DEFAULT NULL,
+      maxScore      INT DEFAULT 100,
+      status        ENUM('pending','completed') DEFAULT 'pending',
+      sentAt        DATETIME DEFAULT CURRENT_TIMESTAMP,
+      submittedAt   DATETIME DEFAULT NULL,
+      INDEX (candidateId),
+      INDEX (token)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+}
+
 connectDB().then(async () => {
   await migratePositionColumn().catch(e => console.warn('Migration warning:', e.message));
   await migrateDepartmentColumn().catch(e => console.warn('Dept column migration warning:', e.message));
+  await migrateCandidateTests().catch(e => console.warn('Candidate tests table warning:', e.message));
   await seedDepartments().catch(e => console.warn('Dept seed warning:', e.message));
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`\n========================================`);

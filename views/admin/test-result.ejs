@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/css/style.css?v=<%= v %>" rel="stylesheet">
+  <style>
+    .score-ring { width:110px; height:110px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-direction:column; border:6px solid #d4af37; }
+    .score-pct  { font-size:1.6rem; font-weight:700; color:#d4af37; line-height:1; }
+    .section-card { border-left:4px solid #d4af37; border-radius:8px; margin-bottom:16px; }
+    .correct   { background:#d4edda; border-color:#28a745!important; }
+    .incorrect { background:#f8d7da; border-color:#dc3545!important; }
+    .opt-badge { display:inline-block; width:28px; height:28px; border-radius:50%; text-align:center; line-height:28px; font-weight:700; font-size:.8rem; margin-right:6px; }
+    .opt-correct   { background:#28a745; color:#fff; }
+    .opt-incorrect { background:#dc3545; color:#fff; }
+    .opt-neutral   { background:#e9ecef; color:#333; }
+    .rating-star { color:#d4af37; font-size:1.1rem; }
+  </style>
+</head>
+<body class="admin-page">
+<div class="admin-wrapper">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-flex flex-column">
+    <div class="sidebar-brand">
+      <img src="/images/patrika-logo.png" alt="Patrika" class="sidebar-logo" onerror="this.style.display='none'">
+      <div>
+        <div class="fw-bold text-gold">Patrika HR</div>
+        <small class="text-white-50">Admin Panel</small>
+      </div>
+    </div>
+    <hr class="border-secondary my-2">
+    <ul class="nav flex-column px-2 flex-grow-1">
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/dashboard"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/candidates"><i class="bi bi-people-fill me-2"></i>Candidates</a></li>
+      <% if (typeof adminRole === 'undefined' || adminRole === 'admin') { %>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/positions"><i class="bi bi-briefcase-fill me-2"></i>Positions</a></li>
+      <% } %>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/requisitions"><i class="bi bi-clipboard-check-fill me-2"></i>Requisitions</a></li>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/talent-analyst"><i class="bi bi-robot me-2"></i>Talent Analyst</a></li>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/resume-parser"><i class="bi bi-file-earmark-text me-2"></i>Resume Parser</a></li>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/apply" target="_blank"><i class="bi bi-file-earmark-person me-2"></i>Application Form</a></li>
+      <% if (typeof adminRole === 'undefined' || adminRole === 'admin') { %>
+      <li class="nav-item"><a class="nav-link sidebar-link" href="/admin/users"><i class="bi bi-person-gear me-2"></i>User Management</a></li>
+      <% } %>
+    </ul>
+    <div class="px-2 pb-3">
+      <a href="/admin/logout" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      <p class="text-white-50 text-center mt-2 mb-0" style="font-size:11px;">Logged in as <strong><%= adminName %></strong></p>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-topbar d-flex align-items-center justify-content-between">
+      <div>
+        <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard2-check me-2 text-gold"></i>Test Result</h5>
+        <small class="text-muted"><%= candidate ? candidate.fullName : '' %> — <%= test.positionName %></small>
+      </div>
+      <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+
+    <div class="p-4">
+      <%
+        const pct = test.score !== null ? Math.round((test.score / test.maxScore) * 100) : null;
+        const grade = pct >= 80 ? 'A' : pct >= 65 ? 'B' : pct >= 50 ? 'C' : 'D';
+        const gradeColor = pct >= 80 ? 'success' : pct >= 65 ? 'primary' : pct >= 50 ? 'warning' : 'danger';
+      %>
+
+      <!-- Score summary -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center g-4">
+            <div class="col-auto">
+              <div class="score-ring">
+                <div class="score-pct"><%= pct !== null ? pct + '%' : '—' %></div>
+                <div style="font-size:.7rem;color:#888;">Score</div>
+              </div>
+            </div>
+            <div class="col">
+              <h5 class="fw-bold mb-1"><%= candidate ? candidate.fullName : 'Candidate' %></h5>
+              <div class="text-muted mb-2"><%= test.positionName %></div>
+              <div class="d-flex gap-3 flex-wrap">
+                <div><span class="fw-semibold">Score:</span> <strong class="text-gold"><%= test.score %> / <%= test.maxScore %></strong></div>
+                <div><span class="fw-semibold">Grade:</span> <span class="badge bg-<%= gradeColor %> fs-6 px-3"><%= grade %></span></div>
+                <div><span class="fw-semibold">Status:</span>
+                  <% if (test.status === 'completed') { %>
+                  <span class="badge bg-success">Completed</span>
+                  <% } else { %>
+                  <span class="badge bg-warning text-dark">Pending</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="text-muted small mt-2">
+                Sent: <%= test.sentAt ? new Date(test.sentAt).toLocaleString('en-IN') : '—' %> &nbsp;|&nbsp;
+                Submitted: <%= test.submittedAt ? new Date(test.submittedAt).toLocaleString('en-IN') : 'Not yet' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if (test.status === 'pending') { %>
+      <div class="alert alert-warning"><i class="bi bi-hourglass-split me-2"></i>Candidate has not yet submitted the assessment.</div>
+      <% } else { %>
+
+      <!-- Section-wise breakdown -->
+      <% let qGlobal = 0; %>
+      <% testData.sections.forEach(function(section) { %>
+      <div class="card shadow-sm section-card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center bg-white py-2">
+          <span class="fw-bold"><%= section.name %></span>
+          <%
+            let secScore = 0, secMax = section.marks;
+            if (section.type === 'mcq') {
+              section.questions.forEach((q, qi) => {
+                const key = section.name + '_' + qi;
+                if (answers[key] === q.correct) secScore += section.marksPerQ;
+              });
+            } else {
+              section.questions.forEach((q, qi) => {
+                const key = section.name + '_' + qi;
+                secScore += (parseInt(answers[key]) || 0) / 2;
+              });
+              secScore = Math.round(secScore);
+            }
+          %>
+          <span class="badge bg-gold text-dark"><%= secScore %> / <%= secMax %></span>
+        </div>
+        <div class="card-body p-0">
+
+          <% if (section.type === 'mcq') { %>
+          <% section.questions.forEach(function(q, qi) { qGlobal++;
+            const key = section.name + '_' + qi;
+            const given = answers[key];
+            const isCorrect = given === q.correct;
+          %>
+          <div class="question-block px-4 py-3 border-bottom <%= isCorrect ? 'correct' : (given ? 'incorrect' : '') %>">
+            <div class="fw-semibold mb-2"><%= qGlobal %>. <%= q.q %></div>
+            <% ['A','B','C','D'].forEach(function(opt) { %>
+            <div class="d-flex align-items-center mb-1">
+              <span class="opt-badge <%= opt === q.correct ? 'opt-correct' : (opt === given && !isCorrect ? 'opt-incorrect' : 'opt-neutral') %>"><%= opt %></span>
+              <span class="<%= opt === q.correct ? 'fw-semibold text-success' : (opt === given && !isCorrect ? 'text-danger' : 'text-muted') %>">
+                <%= q.options[opt] %>
+                <% if (opt === q.correct) { %> <i class="bi bi-check-circle-fill text-success ms-1"></i><% } %>
+                <% if (opt === given && !isCorrect) { %> <i class="bi bi-x-circle-fill text-danger ms-1"></i> <span class="badge bg-danger ms-1">Your answer</span><% } %>
+                <% if (opt === given && isCorrect) { %> <span class="badge bg-success ms-1">Your answer ✓</span><% } %>
+              </span>
+            </div>
+            <% }) %>
+          </div>
+          <% }) %>
+
+          <% } else if (section.type === 'rating') { %>
+          <div class="px-4 py-3">
+            <div class="text-muted small mb-2"><%= section.note %></div>
+            <% section.questions.forEach(function(q, qi) { qGlobal++;
+              const key = section.name + '_' + qi;
+              const val = parseInt(answers[key]) || 0;
+            %>
+            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+              <span class="flex-grow-1"><%= qGlobal - section.questions.length + qi + 1 %>. <%= q.q %></span>
+              <div>
+                <% for(let n=1;n<=5;n++) { %>
+                <i class="bi bi-<%= n <= val ? 'star-fill' : 'star' %> rating-star"></i>
+                <% } %>
+                <span class="ms-2 fw-bold text-gold"><%= val %>/5</span>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+          <% } %>
+
+        </div>
+      </div>
+      <% }) %>
+      <% } %>
+
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
