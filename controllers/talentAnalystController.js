@@ -1,5 +1,5 @@
 const { Candidate, Position } = require('../models');
-const { analyseCandidate, reportToGrade } = require('../utils/talentAnalyst');
+const { analyseCandidate, reportToGrade, ntlCustomRubric, NTL_POSITION } = require('../utils/talentAnalyst');
 
 exports.showPage = async (req, res) => {
   try {
@@ -50,7 +50,8 @@ exports.analyse = async (req, res) => {
     const results = [];
 
     for (const c of candidates) {
-      const report = await analyseCandidate(c, jd || '', roleName || c.positionApplying, customRubric);
+      const effectiveRubric = c.positionApplying === NTL_POSITION ? ntlCustomRubric : customRubric;
+      const report = await analyseCandidate(c, jd || '', roleName || c.positionApplying, effectiveRubric);
 
       if (report && report.tier) {
         // Persist the report + derived grade so it shows in the Candidates tab

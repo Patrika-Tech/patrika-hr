@@ -198,4 +198,19 @@ function reportToGrade(report) {
   };
 }
 
-module.exports = { analyseCandidate, buildCandidateProfile, reportToGrade, SYSTEM_PROMPT };
+const NTL_POSITION = 'NEWS TECH LAB- JUNIOR JOURNALIST (20 OPENINGS)- JAIPUR';
+
+// Force fresher rubric for News Tech Lab — no experience dimension
+const ntlCustomRubric = `MANDATORY OVERRIDE FOR THIS ROLE:
+This is an entry-level Junior Journalist trainee programme. ALWAYS use the FRESHER rubric regardless of the candidate's years of experience. DO NOT include "Relevant Experience" as a dimension.
+
+Use EXACTLY these five dimensions with these weights:
+  D1. Education & Academic Fit     (25%) — degree in Journalism/Mass Comm/related; academic record; certifications
+  D2. Skills & Competency Match    (30%) — writing, reporting, digital tools, language proficiency; internships, projects, and college work COUNT as valid skill evidence
+  D3. Learning Agility & Potential (15%) — self-learning, portfolio, extracurricular, competitions, initiative
+  D4. Motivation & Culture Fit     (20%) — whyJoinUs answer quality, career clarity, interest in journalism
+  D5. Compensation Alignment       (10%) — expected/current package vs entry-level budget
+
+Do NOT penalise a candidate for lack of professional work experience. Do NOT add "lack of work experience" as a concern.`;
+
+module.exports = { analyseCandidate, buildCandidateProfile, reportToGrade, SYSTEM_PROMPT, ntlCustomRubric, NTL_POSITION };

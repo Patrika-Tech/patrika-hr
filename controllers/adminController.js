@@ -946,9 +946,10 @@ exports.gradeOne = async (req, res) => {
       }
     }
 
-    const { analyseCandidate, reportToGrade } = require('../utils/talentAnalyst');
+    const { analyseCandidate, reportToGrade, ntlCustomRubric } = require('../utils/talentAnalyst');
     console.log('[gradeOne] calling analyseCandidate...');
-    const report = await analyseCandidate(c, jdHtml, c.positionApplying);
+    const customRubric = c.positionApplying === NTL_POSITION ? ntlCustomRubric : undefined;
+    const report = await analyseCandidate(c, jdHtml, c.positionApplying, customRubric);
     if (!report || !report.tier) {
       console.log('[gradeOne] analyseCandidate returned null');
       return res.status(500).json({ success: false, error: 'Talent Analyst returned no result — check GROQ API key / connectivity' });
