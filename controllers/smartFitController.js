@@ -123,8 +123,7 @@ exports.analyse = async (req, res) => {
 
     const candidates = await Candidate.findAll({
       where,
-      order: [['submittedAt', 'DESC']],
-      limit: 100
+      order: [['submittedAt', 'DESC']]
     });
 
     if (!candidates.length) return res.json({ success: true, results: [] });

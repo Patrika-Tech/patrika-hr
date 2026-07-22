@@ -101,7 +101,7 @@ ${enabledParams.map(k => `    "${k}": { "score": 3, "evidence": "one sentence", 
       },
       {
         headers: { 'Authorization': `Bearer ${apiKey.trim()}`, 'Content-Type': 'application/json' },
-        timeout: 25000
+        timeout: 40000
       }
     );
 
