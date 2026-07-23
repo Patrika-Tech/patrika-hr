@@ -328,95 +328,74 @@
               <p class="text-muted small mb-0">No Smart Fit analysis yet. Click <strong>Re-grade</strong> to analyse this candidate.</p>
             </div>
             <% } else { %>
-
             <%
-              const totalPct  = sfData.total || 0;
-              const scoreBar  = totalPct >= 75 ? 'success' : totalPct >= 50 ? 'primary' : totalPct >= 25 ? 'warning' : 'danger';
+              const totalPct = sfData.total || 0;
+              const scoreBar = totalPct >= 75 ? 'success' : totalPct >= 50 ? 'primary' : totalPct >= 25 ? 'warning' : 'danger';
+              const lvlBg    = { High:'#d4edda', Medium:'#fff3cd', Low:'#f8d7da' };
+              const lvlBdr   = { High:'#28a745', Medium:'#ffc107', Low:'#dc3545' };
+              const lvlTxt   = { High:'#155724', Medium:'#856404', Low:'#721c24' };
             %>
-            <!-- Score bar -->
-            <div style="background:#f0fff0;padding:12px 20px 10px;border-bottom:1px solid #e0f0e0;">
+
+            <!-- Total score bar -->
+            <div style="background:#f0fff2;padding:14px 20px 12px;border-bottom:1px solid #d4edda;">
               <div class="d-flex align-items-center gap-3">
+                <span style="font-size:12px;color:#2e5e2e;font-weight:600;min-width:120px;">Overall Fit Score</span>
                 <div style="flex:1;">
-                  <div class="progress" style="height:10px;border-radius:6px;background:#dde;">
-                    <div class="progress-bar bg-<%= scoreBar %>" style="width:<%= totalPct %>%;transition:width .5s;border-radius:6px;"></div>
+                  <div class="progress" style="height:12px;border-radius:6px;background:#c3e6cb;">
+                    <div class="progress-bar bg-<%= scoreBar %>" style="width:<%= totalPct %>%;border-radius:6px;font-size:10px;line-height:12px;"><%= totalPct %>%</div>
                   </div>
                 </div>
-                <span class="fw-bold" style="font-size:15px;color:#1b3a1b;min-width:60px;text-align:right;"><%= totalPct %> / 100</span>
+                <span style="font-size:20px;font-weight:700;color:#1b3a1b;min-width:70px;text-align:right;"><%= totalPct %><span style="font-size:13px;font-weight:400;color:#555;">/100</span></span>
               </div>
             </div>
 
-            <!-- 2-col layout: params left, summary right -->
-            <div class="row g-0" style="min-height:200px;">
+            <!-- Summary -->
+            <% if (sfData.summary) { %>
+            <div style="background:#f8fff8;padding:14px 20px;border-bottom:1px solid #e0f0e0;font-size:13px;line-height:1.7;color:#333;">
+              <i class="bi bi-chat-left-quote-fill me-2" style="color:#28a745;"></i><%= sfData.summary %>
+            </div>
+            <% } %>
 
-              <!-- Parameter Breakdown -->
-              <div class="col-md-5" style="border-right:1px solid #e8f5e8;padding:16px 18px;">
-                <div class="text-uppercase fw-semibold mb-3" style="font-size:10px;letter-spacing:.08em;color:#2e5e2e;">
-                  <i class="bi bi-bar-chart-line me-1"></i>Parameter Breakdown
-                </div>
-                <% if (Array.isArray(sfData.params)) { sfData.params.forEach(function(p) { %>
-                <div class="mb-3">
-                  <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="fw-semibold" style="font-size:12.5px;"><%= p.label %></span>
+            <!-- Parameter cards grid -->
+            <% if (Array.isArray(sfData.params) && sfData.params.length) { %>
+            <div style="padding:16px 18px;">
+              <div style="font-size:10px;font-weight:600;letter-spacing:.08em;color:#2e5e2e;text-transform:uppercase;margin-bottom:12px;">
+                <i class="bi bi-bar-chart-line me-1"></i>Parameter Breakdown
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">
+                <% sfData.params.forEach(function(p) {
+                  const bg  = lvlBg[p.level]  || '#f8f9fa';
+                  const bdr = lvlBdr[p.level] || '#6c757d';
+                  const txt = lvlTxt[p.level] || '#333';
+                  const pct = Math.round((p.score / p.max) * 100);
+                %>
+                <div style="background:<%= bg %>;border:1.5px solid <%= bdr %>30;border-left:4px solid <%= bdr %>;border-radius:8px;padding:12px 14px;">
+                  <!-- Header row -->
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span style="font-weight:700;font-size:13px;color:#1a1a1a;"><%= p.label %></span>
                     <div class="d-flex align-items-center gap-1">
-                      <span class="fw-bold" style="font-size:12px;"><%= p.score %>/<%= p.max %></span>
-                      <span class="badge bg-<%= lvlColor[p.level]||'secondary' %>" style="font-size:9px;padding:2px 6px;"><%= p.level %></span>
+                      <span style="font-size:13px;font-weight:700;color:<%= bdr %>;"><%= p.score %>/<%= p.max %></span>
+                      <span style="background:<%= bdr %>;color:#fff;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;"><%= p.level %></span>
                     </div>
                   </div>
-                  <div class="progress mb-1" style="height:5px;border-radius:4px;background:#e8f0e8;">
-                    <div class="progress-bar bg-<%= lvlColor[p.level]||'secondary' %>"
-                         style="width:<%= Math.round((p.score/p.max)*100) %>%;border-radius:4px;"></div>
+                  <!-- Progress bar -->
+                  <div style="background:#fff;border-radius:4px;height:6px;margin-bottom:8px;overflow:hidden;">
+                    <div style="width:<%= pct %>%;height:100%;background:<%= bdr %>;border-radius:4px;transition:width .4s;"></div>
                   </div>
+                  <!-- Reason -->
                   <% if (p.reason) { %>
-                  <div style="font-size:11px;color:#555;line-height:1.45;"><%= p.reason %></div>
+                  <div style="font-size:11.5px;color:<%= txt %>;line-height:1.5;"><%= p.reason %></div>
                   <% } %>
+                  <!-- Weight footnote -->
+                  <div style="margin-top:8px;padding-top:6px;border-top:1px solid <%= bdr %>25;display:flex;justify-content:space-between;font-size:10px;color:#777;">
+                    <span>Weight: <strong><%= p.weight %>%</strong></span>
+                    <span>Contribution: <strong><%= p.weighted %> pts</strong></span>
+                  </div>
                 </div>
-                <% }); } %>
+                <% }); %>
               </div>
-
-              <!-- Summary + Weight table -->
-              <div class="col-md-7" style="padding:16px 20px;background:#fafff8;">
-                <% if (sfData.summary) { %>
-                <div class="text-uppercase fw-semibold mb-2" style="font-size:10px;letter-spacing:.08em;color:#2e5e2e;">
-                  <i class="bi bi-chat-quote me-1"></i>Overall Assessment
-                </div>
-                <p style="font-size:13px;line-height:1.7;color:#333;margin-bottom:18px;"><%= sfData.summary %></p>
-                <% } %>
-                <% if (Array.isArray(sfData.params)) { %>
-                <div class="text-uppercase fw-semibold mb-2" style="font-size:10px;letter-spacing:.08em;color:#2e5e2e;">
-                  <i class="bi bi-table me-1"></i>Score Breakdown
-                </div>
-                <table class="table table-sm mb-0" style="font-size:12px;">
-                  <thead style="background:#e8f5e8;">
-                    <tr>
-                      <th style="font-weight:600;">Parameter</th>
-                      <th class="text-center" style="font-weight:600;">Score</th>
-                      <th class="text-center" style="font-weight:600;">Weight</th>
-                      <th class="text-center" style="font-weight:600;">Contribution</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% sfData.params.forEach(function(p) { %>
-                    <tr>
-                      <td><%= p.label %></td>
-                      <td class="text-center">
-                        <span class="badge bg-<%= p.score>=4?'success':p.score>=3?'primary':p.score>=2?'warning':'danger' %>" style="font-size:10px;">
-                          <%= p.score %>/<%= p.max %>
-                        </span>
-                      </td>
-                      <td class="text-center text-muted"><%= p.weight %>%</td>
-                      <td class="text-center fw-semibold"><%= p.weighted %></td>
-                    </tr>
-                    <% }); %>
-                    <tr style="background:#e8f5e8;font-weight:700;">
-                      <td colspan="3" class="text-end">Total Score</td>
-                      <td class="text-center"><%= sfData.total %>/100</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <% } %>
-              </div>
-
             </div>
+            <% } %>
             <% } %>
           </div>
 
