@@ -269,6 +269,21 @@ exports.candidatesList = async (req, res) => {
     const [sfCfgRows] = await sequelize.query('SELECT positionName FROM smart_fit_configs');
     const smartFitPositions = sfCfgRows.map(r => r.positionName);
 
+    // For Smart Fit positions: load breakdown data for current page candidates
+    let sfBreakdowns = {};
+    const isSmartFitView = position && smartFitPositions.includes(position);
+    if (isSmartFitView && candidates.length) {
+      const ids = candidates.map(c => c.id);
+      const [sfRows] = await sequelize.query(
+        `SELECT candidateId, totalScore, breakdown FROM smart_fit_scores
+         WHERE positionName = ? AND candidateId IN (${ids.join(',')})`,
+        { replacements: [position] }
+      );
+      sfRows.forEach(r => {
+        try { sfBreakdowns[r.candidateId] = { total: r.totalScore, ...JSON.parse(r.breakdown) }; } catch(e) {}
+      });
+    }
+
     res.render('admin/candidates', {
       title:           'Candidates – Patrika HR',
       candidates,
@@ -281,7 +296,9 @@ exports.candidatesList = async (req, res) => {
       adminRole:       req.session.adminRole,
       adminDepartment: req.session.adminDepartment,
       allPositions,
-      smartFitPositions
+      smartFitPositions,
+      sfBreakdowns,
+      isSmartFitView
     });
   } catch (err) {
     console.error(err);
